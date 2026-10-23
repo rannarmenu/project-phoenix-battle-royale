@@ -1,29 +1,40 @@
 extends CharacterBody3D
 
-const MOVE_SPEED: float = 7.0
-const JUMP_SPEED: float = 7.2
-const GRAVITY: float = 22.0
-const MOUSE_SENSITIVITY: float = 0.0022
-const TOUCH_LOOK_SENSITIVITY: float = 0.003
-const JOYSTICK_RADIUS: float = 92.0
+signal camera_mode_changed(first_person: bool)
+
+const MOVE_SPEED := 6.5
+const SPRINT_SPEED := 8.5
+const JUMP_SPEED := 7.0
+const GRAVITY := 22.0
+const MOUSE_SENSITIVITY := 0.0022
+const TOUCH_LOOK_SENSITIVITY := 0.003
+const JOYSTICK_RADIUS := 88.0
 
 var camera: Camera3D
-var touch_move_index: int = -1
-var touch_look_index: int = -1
-var touch_move_origin: Vector2 = Vector2.ZERO
-var touch_move_vector: Vector2 = Vector2.ZERO
-var can_fire: bool = true
-var jump_requested: bool = false
-var is_mobile: bool = false
+var camera_pivot: Node3D
+var weapon: MeshInstance3D
+var touch_move_index := -1
+var touch_look_index := -1
+var touch_move_origin := Vector2.ZERO
+var touch_move_vector := Vector2.ZERO
+var can_fire := true
+var jump_requested := false
+var first_person := false
+var is_mobile := false
+var ammo := 30
+var reserve_ammo := 120
+var health := 100
+var hud_label: Label
 
 func _ready() -> void:
 	is_mobile = OS.has_feature("android") or OS.has_feature("ios")
 	_make_player_body()
 	_make_camera_and_weapon()
 	_configure_input()
-	_build_touch_controls()
+	_build_hud()
 	if not is_mobile:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	_update_camera_mode()
 
 func _make_player_body() -> void:
 	var collision := CollisionShape3D.new()
@@ -34,24 +45,51 @@ func _make_player_body() -> void:
 	collision.position.y = 0.93
 	add_child(collision)
 
+	var body := MeshInstance3D.new()
+	body.name = "PhoenixPlayerBody"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.39
+	body_mesh.height = 1.8
+	body.mesh = body_mesh
+	body.position.y = 0.93
+	var body_material := StandardMaterial3D.new()
+	body_material.albedo_color = Color(0.09, 0.36, 0.29)
+	body_material.roughness = 0.8
+	body.material_override = body_material
+	add_child(body)
+
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.22
+	head_mesh.height = 0.44
+	head.mesh = head_mesh
+	head.position.y = 1.92
+	var head_material := StandardMaterial3D.new()
+	head_material.albedo_color = Color(0.72, 0.52, 0.38)
+	head.material_override = head_material
+	add_child(head)
+
 func _make_camera_and_weapon() -> void:
+	camera_pivot = Node3D.new()
+	camera_pivot.name = "CameraPivot"
+	camera_pivot.position = Vector3(0.0, 1.55, 0.0)
+	add_child(camera_pivot)
+
 	camera = Camera3D.new()
 	camera.name = "PlayerCamera"
-	camera.position = Vector3(0.0, 1.58, 0.0)
 	camera.current = true
-	camera.fov = 78.0
-	add_child(camera)
+	camera.fov = 76.0
+	camera_pivot.add_child(camera)
 
-	var weapon := MeshInstance3D.new()
+	weapon = MeshInstance3D.new()
 	weapon.name = "PrototypeRifle"
 	var weapon_mesh := BoxMesh.new()
-	weapon_mesh.size = Vector3(0.16, 0.13, 0.52)
+	weapon_mesh.size = Vector3(0.16, 0.13, 0.58)
 	weapon.mesh = weapon_mesh
-	weapon.position = Vector3(0.27, -0.22, -0.48)
 	var weapon_material := StandardMaterial3D.new()
 	weapon_material.albedo_color = Color(0.095, 0.12, 0.12)
-	weapon_material.metallic = 0.58
-	weapon_material.roughness = 0.45
+	weapon_material.metallic = 0.45
+	weapon_material.roughness = 0.5
 	weapon.material_override = weapon_material
 	camera.add_child(weapon)
 
@@ -61,8 +99,6 @@ func _configure_input() -> void:
 	_add_key_action("move_left", KEY_A)
 	_add_key_action("move_right", KEY_D)
 	_add_key_action("jump", KEY_SPACE)
-	if not InputMap.has_action("fire"):
-		InputMap.add_action("fire")
 
 func _add_key_action(action_name: String, key_code: Key) -> void:
 	if not InputMap.has_action(action_name):
@@ -71,65 +107,76 @@ func _add_key_action(action_name: String, key_code: Key) -> void:
 	key_event.physical_keycode = key_code
 	InputMap.action_add_event(action_name, key_event)
 
-func _build_touch_controls() -> void:
-	if not is_mobile:
-		return
+func _build_hud() -> void:
 	var layer := CanvasLayer.new()
-	layer.name = "TouchControls"
+	layer.name = "PlayerHUD"
 	add_child(layer)
 
-	var fire_button := Button.new()
-	fire_button.text = "FIRE"
-	fire_button.anchor_left = 1.0
-	fire_button.anchor_right = 1.0
-	fire_button.anchor_top = 1.0
-	fire_button.anchor_bottom = 1.0
-	fire_button.offset_left = -154.0
-	fire_button.offset_right = -24.0
-	fire_button.offset_top = -184.0
-	fire_button.offset_bottom = -74.0
+	hud_label = Label.new()
+	hud_label.position = Vector2(22.0, 82.0)
+	hud_label.add_theme_font_size_override("font_size", 17)
+	hud_label.add_theme_color_override("font_color", Color(0.9, 0.97, 0.9))
+	layer.add_child(hud_label)
+	_update_hud()
+
+	var camera_button := _make_button("CAMERA", Vector2(-154, 22), Vector2(130, 44))
+	camera_button.pressed.connect(toggle_camera_mode)
+	layer.add_child(camera_button)
+
+	var fire_button := _make_button("FIRE", Vector2(-154, 76), Vector2(130, 60))
 	fire_button.add_theme_font_size_override("font_size", 22)
-	fire_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-	fire_button.add_theme_color_override("font_pressed_color", Color(1.0, 0.82, 0.58))
-	layer.add_child(fire_button)
 	fire_button.pressed.connect(_shoot)
+	layer.add_child(fire_button)
 
-	var jump_button := Button.new()
-	jump_button.text = "JUMP"
-	jump_button.anchor_left = 1.0
-	jump_button.anchor_right = 1.0
-	jump_button.anchor_top = 1.0
-	jump_button.anchor_bottom = 1.0
-	jump_button.offset_left = -286.0
-	jump_button.offset_right = -166.0
-	jump_button.offset_top = -154.0
-	jump_button.offset_bottom = -74.0
-	jump_button.add_theme_font_size_override("font_size", 18)
-	layer.add_child(jump_button)
+	var jump_button := _make_button("JUMP", Vector2(-154, 146), Vector2(130, 46))
 	jump_button.pressed.connect(_request_jump)
+	layer.add_child(jump_button)
 
-	var hint := Label.new()
-	hint.text = "LEFT SIDE: MOVE   •   DRAG RIGHT SIDE: AIM"
-	hint.anchor_left = 0.5
-	hint.anchor_right = 0.5
-	hint.offset_left = -250.0
-	hint.offset_right = 250.0
-	hint.offset_top = 58.0
-	hint.offset_bottom = 88.0
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 13)
-	hint.add_theme_color_override("font_color", Color(0.82, 0.88, 0.83, 0.85))
-	layer.add_child(hint)
+	var reload_button := _make_button("RELOAD", Vector2(-154, 202), Vector2(130, 44))
+	reload_button.pressed.connect(_reload)
+	layer.add_child(reload_button)
+
+	if is_mobile:
+		var hint := Label.new()
+		hint.text = "LEFT: MOVE   •   RIGHT: AIM"
+		hint.anchor_left = 0.5
+		hint.anchor_right = 0.5
+		hint.offset_left = -180
+		hint.offset_right = 180
+		hint.offset_top = 54
+		hint.offset_bottom = 82
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.add_theme_font_size_override("font_size", 13)
+		hint.add_theme_color_override("font_color", Color(0.82, 0.88, 0.83, 0.9))
+		layer.add_child(hint)
+
+func _make_button(text_value: String, offset: Vector2, button_size: Vector2) -> Button:
+	var button := Button.new()
+	button.text = text_value
+	button.anchor_left = 1.0
+	button.anchor_right = 1.0
+	button.anchor_top = 0.0
+	button.anchor_bottom = 0.0
+	button.offset_left = offset.x
+	button.offset_right = offset.x + button_size.x
+	button.offset_top = offset.y
+	button.offset_bottom = offset.y + button_size.y
+	button.add_theme_font_size_override("font_size", 16)
+	return button
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and not is_mobile:
+	if event is InputEventMouseMotion and not is_mobile and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_apply_look(event.relative, MOUSE_SENSITIVITY)
-	elif event is InputEventMouseButton and not is_mobile:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	elif event is InputEventMouseButton and not is_mobile and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT:
 			_shoot()
-	elif event is InputEventKey:
-		if event.keycode == KEY_ESCAPE and event.pressed and not is_mobile:
+	elif event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE and not is_mobile:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		elif event.keycode == KEY_V:
+			toggle_camera_mode()
+		elif event.keycode == KEY_R:
+			_reload()
 	elif event is InputEventScreenTouch and is_mobile:
 		_handle_screen_touch(event)
 	elif event is InputEventScreenDrag and is_mobile:
@@ -138,11 +185,11 @@ func _input(event: InputEvent) -> void:
 func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 	var view_size: Vector2 = get_viewport().get_visible_rect().size
 	if event.pressed:
-		if event.position.x < view_size.x * 0.43 and event.position.y > view_size.y * 0.2:
+		if event.position.x < view_size.x * 0.43 and event.position.y > view_size.y * 0.2 and touch_move_index == -1:
 			touch_move_index = event.index
 			touch_move_origin = event.position
 			touch_move_vector = Vector2.ZERO
-		elif event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.72:
+		elif event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.72 and touch_look_index == -1:
 			touch_look_index = event.index
 	else:
 		if event.index == touch_move_index:
@@ -159,8 +206,8 @@ func _handle_screen_drag(event: InputEventScreenDrag) -> void:
 
 func _apply_look(relative_motion: Vector2, sensitivity: float) -> void:
 	rotate_y(-relative_motion.x * sensitivity)
-	camera.rotate_x(-relative_motion.y * sensitivity)
-	camera.rotation.x = clampf(camera.rotation.x, deg_to_rad(-82.0), deg_to_rad(82.0))
+	camera_pivot.rotate_x(-relative_motion.y * sensitivity)
+	camera_pivot.rotation.x = clampf(camera_pivot.rotation.x, deg_to_rad(-55.0), deg_to_rad(65.0))
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
@@ -173,25 +220,37 @@ func _physics_process(delta: float) -> void:
 	if move_input.length() > 1.0:
 		move_input = move_input.normalized()
 	var direction := (global_transform.basis * Vector3(move_input.x, 0.0, move_input.y)).normalized()
-	velocity.x = direction.x * MOVE_SPEED
-	velocity.z = direction.z * MOVE_SPEED
-
+	var speed := SPRINT_SPEED if Input.is_key_pressed(KEY_SHIFT) and not is_mobile else MOVE_SPEED
+	velocity.x = direction.x * speed
+	velocity.z = direction.z * speed
 	if Input.is_action_just_pressed("jump"):
 		_request_jump()
-	if Input.is_action_just_pressed("fire"):
-		_shoot()
 	move_and_slide()
 
-func _request_jump() -> void:
-	jump_requested = true
+func toggle_camera_mode() -> void:
+	first_person = not first_person
+	_update_camera_mode()
+	camera_mode_changed.emit(first_person)
+
+func _update_camera_mode() -> void:
+	if not is_instance_valid(camera):
+		return
+	camera.position = Vector3(0.0, 0.0, 0.08) if first_person else Vector3(0.0, 0.55, 4.2)
+	camera.fov = 82.0 if first_person else 74.0
+	weapon.visible = first_person
+	for node in get_children():
+		if node is MeshInstance3D and node.name in ["PhoenixPlayerBody"]:
+			node.visible = not first_person
 
 func _shoot() -> void:
-	if not can_fire or not is_instance_valid(camera):
+	if not can_fire or not is_instance_valid(camera) or ammo <= 0:
+		if ammo <= 0:
+			_reload()
 		return
 	can_fire = false
-	var timer := get_tree().create_timer(0.16)
-	timer.timeout.connect(func() -> void: can_fire = true)
-
+	ammo -= 1
+	_update_hud()
+	get_tree().create_timer(0.14).timeout.connect(func() -> void: can_fire = true)
 	var ray_start: Vector3 = camera.global_position
 	var ray_end: Vector3 = ray_start - camera.global_transform.basis.z * 140.0
 	var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
@@ -201,6 +260,22 @@ func _shoot() -> void:
 		var collider: Object = hit.get("collider")
 		if is_instance_valid(collider) and collider.has_method("take_damage"):
 			collider.call("take_damage", 34.0)
+
+func _reload() -> void:
+	if ammo >= 30 or reserve_ammo <= 0:
+		return
+	var amount: int = mini(30 - ammo, reserve_ammo)
+	ammo += amount
+	reserve_ammo -= amount
+	_update_hud()
+
+func _request_jump() -> void:
+	if is_on_floor():
+		jump_requested = true
+
+func _update_hud() -> void:
+	if is_instance_valid(hud_label):
+		hud_label.text = "HP %d     AMMO %d / %d" % [health, ammo, reserve_ammo]
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and not is_mobile:
