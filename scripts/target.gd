@@ -95,7 +95,7 @@ func _make_body() -> void:
 	var helmet_mesh := SphereMesh.new()
 	helmet_mesh.radius = 0.25
 	helmet_mesh.height = 0.32
-	helmet_mesh.scale = Vector3(1.0, 0.72, 1.05)
+	helmet.scale = Vector3(1.0, 0.72, 1.05)
 	helmet.mesh = helmet_mesh
 	helmet.position = Vector3(0.0, 2.02, 0.015)
 	var helmet_material := StandardMaterial3D.new()
