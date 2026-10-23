@@ -59,6 +59,7 @@ func _make_player_body() -> void:
 	add_child(body)
 
 	var head := MeshInstance3D.new()
+	head.name = "PhoenixPlayerHead"
 	var head_mesh := SphereMesh.new()
 	head_mesh.radius = 0.22
 	head_mesh.height = 0.44
@@ -239,7 +240,7 @@ func _update_camera_mode() -> void:
 	camera.fov = 82.0 if first_person else 74.0
 	weapon.visible = first_person
 	for node in get_children():
-		if node is MeshInstance3D and node.name in ["PhoenixPlayerBody"]:
+		if node is MeshInstance3D and node.name in ["PhoenixPlayerBody", "PhoenixPlayerHead"]:
 			node.visible = not first_person
 
 func _shoot() -> void:
