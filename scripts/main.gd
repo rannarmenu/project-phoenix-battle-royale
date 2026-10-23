@@ -19,9 +19,21 @@ var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var quality_button: Button
 var graphics_quality_index: int = 1
+var online_toggle_button: Button
+var network_panel: PanelContainer
+var network_address_input: LineEdit
+var network_port_input: LineEdit
+var network_status_label: Label
+var network_sync_elapsed: float = 0.0
+var network_player_states: Dictionary = {}
+var network_player_avatars: Dictionary = {}
+const NETWORK_SYNC_INTERVAL: float = 0.05
 const GRAPHICS_QUALITY_NAMES: Array[String] = ["LOW", "BALANCED", "HIGH"]
 
 func _ready() -> void:
+	NetworkSession.session_changed.connect(_on_network_session_changed)
+	NetworkSession.peer_joined.connect(_on_network_peer_joined)
+	NetworkSession.peer_left.connect(_on_network_peer_left)
 	_build_environment()
 	_build_arena()
 	_spawn_safe_zone()
@@ -33,6 +45,7 @@ func _ready() -> void:
 	_update_hud()
 
 func _process(delta: float) -> void:
+	_process_network_replication(delta)
 	if match_state != &"IN_PROGRESS":
 		return
 	match_elapsed += delta
@@ -298,6 +311,8 @@ func _build_hud() -> void:
 	quality_button.pressed.connect(_cycle_graphics_quality)
 	layer.add_child(quality_button)
 
+	_build_network_panel(layer)
+
 	var crosshair := Label.new()
 	crosshair.text = "+"
 	crosshair.anchor_left = 0.5
@@ -379,6 +394,386 @@ func _finish_match(result: StringName) -> void:
 	retry.pressed.connect(func() -> void: get_tree().reload_current_scene())
 	layout.add_child(retry)
 	_update_hud()
+
+
+
+func _build_network_panel(layer: CanvasLayer) -> void:
+	online_toggle_button = Button.new()
+	online_toggle_button.name = "OnlineToggleButton"
+	online_toggle_button.text = "ONLINE  +"
+	online_toggle_button.anchor_left = 0.5
+	online_toggle_button.anchor_right = 0.5
+	online_toggle_button.anchor_top = 1.0
+	online_toggle_button.anchor_bottom = 1.0
+	online_toggle_button.offset_left = -76.0
+	online_toggle_button.offset_right = 76.0
+	online_toggle_button.offset_top = -52.0
+	online_toggle_button.offset_bottom = -12.0
+	online_toggle_button.pressed.connect(_toggle_network_panel)
+	layer.add_child(online_toggle_button)
+
+	network_panel = PanelContainer.new()
+	network_panel.name = "NetworkPanel"
+	network_panel.anchor_left = 0.5
+	network_panel.anchor_right = 0.5
+	network_panel.anchor_top = 1.0
+	network_panel.anchor_bottom = 1.0
+	network_panel.offset_left = -150.0
+	network_panel.offset_right = 150.0
+	network_panel.offset_top = -276.0
+	network_panel.offset_bottom = -62.0
+	network_panel.visible = false
+	layer.add_child(network_panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 7)
+	network_panel.add_child(layout)
+
+	var heading := Label.new()
+	heading.text = "PHOENIX ONLINE  /  EXPERIMENTAL"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 13)
+	layout.add_child(heading)
+
+	network_address_input = LineEdit.new()
+	network_address_input.name = "ServerAddressInput"
+	network_address_input.placeholder_text = "Server IP or hostname"
+	network_address_input.text = "127.0.0.1"
+	network_address_input.clear_button_enabled = true
+	layout.add_child(network_address_input)
+
+	network_port_input = LineEdit.new()
+	network_port_input.name = "ServerPortInput"
+	network_port_input.placeholder_text = "UDP port (1024-65535)"
+	network_port_input.text = str(NetworkSession.DEFAULT_PORT)
+	network_port_input.max_length = 5
+	network_port_input.input_filter = "0123456789"
+	layout.add_child(network_port_input)
+
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 6)
+	layout.add_child(button_row)
+
+	var host_button := Button.new()
+	host_button.name = "HostSessionButton"
+	host_button.text = "HOST"
+	host_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host_button.pressed.connect(_on_host_session_pressed)
+	button_row.add_child(host_button)
+
+	var join_button := Button.new()
+	join_button.name = "JoinSessionButton"
+	join_button.text = "JOIN"
+	join_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	join_button.pressed.connect(_on_join_session_pressed)
+	button_row.add_child(join_button)
+
+	var leave_button := Button.new()
+	leave_button.name = "LeaveSessionButton"
+	leave_button.text = "LEAVE"
+	leave_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	leave_button.pressed.connect(_on_leave_session_pressed)
+	button_row.add_child(leave_button)
+
+	network_status_label = Label.new()
+	network_status_label.name = "NetworkStatus"
+	network_status_label.text = "Offline — host and join over a reachable network."
+	network_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	network_status_label.add_theme_font_size_override("font_size", 12)
+	layout.add_child(network_status_label)
+
+func _toggle_network_panel() -> void:
+	if not is_instance_valid(network_panel):
+		return
+	network_panel.visible = not network_panel.visible
+	online_toggle_button.text = "ONLINE  -" if network_panel.visible else "ONLINE  +"
+
+func _read_network_port() -> int:
+	if not is_instance_valid(network_port_input):
+		return NetworkSession.DEFAULT_PORT
+	var value := network_port_input.text.strip_edges()
+	if not value.is_valid_int():
+		return -1
+	var port := int(value)
+	return port if port >= 1 and port <= 65535 else -1
+
+func _on_host_session_pressed() -> void:
+	var port := _read_network_port()
+	if port < 1:
+		_set_network_status("Invalid port. Enter a value from 1 to 65535.")
+		return
+	var result: int = NetworkSession.host_game(port, 16)
+	if result != OK:
+		_set_network_status(NetworkSession.status_message)
+	else:
+		_set_network_status("Hosting on UDP %d. Allow this port through your firewall/router." % port)
+
+func _on_join_session_pressed() -> void:
+	var port := _read_network_port()
+	if port < 1:
+		_set_network_status("Invalid port. Enter a value from 1 to 65535.")
+		return
+	var address := network_address_input.text.strip_edges()
+	var result: int = NetworkSession.join_game(address, port)
+	if result != OK:
+		_set_network_status(NetworkSession.status_message)
+	else:
+		_set_network_status("Connecting to %s:%d…" % [address, port])
+
+func _on_leave_session_pressed() -> void:
+	NetworkSession.leave_game()
+
+func _set_network_status(message: String) -> void:
+	if is_instance_valid(network_status_label):
+		network_status_label.text = message
+
+func _on_network_session_changed(role: StringName, message: String) -> void:
+	_set_network_status("%s — %s" % [str(role), message])
+	if role == &"SERVER":
+		network_player_states.clear()
+		var local_player := get_node_or_null("Player") as Node3D
+		if is_instance_valid(local_player):
+			network_player_states[1] = {
+				"position": local_player.global_position,
+				"yaw": local_player.rotation.y,
+				"received_at": Time.get_ticks_msec() * 0.001
+			}
+		_broadcast_network_roster()
+	elif role == &"CLIENT":
+		var local_player := get_node_or_null("Player") as Node3D
+		if is_instance_valid(local_player):
+			var local_id := multiplayer.get_unique_id()
+			local_player.global_position = _spawn_position_for_peer(local_id)
+			local_player.set("spawn_position", local_player.global_position)
+			network_player_states[local_id] = {
+				"position": local_player.global_position,
+				"yaw": local_player.rotation.y,
+				"received_at": Time.get_ticks_msec() * 0.001
+			}
+	elif role == &"OFFLINE":
+		_clear_network_avatars()
+		network_player_states.clear()
+
+func _on_network_peer_joined(peer_id: int) -> void:
+	if NetworkSession.session_role != &"SERVER" or peer_id <= 1:
+		return
+	var spawn_position := _spawn_position_for_peer(peer_id)
+	network_player_states[peer_id] = {
+		"position": spawn_position,
+		"yaw": 0.0,
+		"received_at": Time.get_ticks_msec() * 0.001
+	}
+	_broadcast_network_roster()
+
+func _on_network_peer_left(peer_id: int) -> void:
+	network_player_states.erase(peer_id)
+	if network_player_avatars.has(peer_id):
+		var avatar: Node = network_player_avatars[peer_id]
+		if is_instance_valid(avatar):
+			avatar.queue_free()
+		network_player_avatars.erase(peer_id)
+	if NetworkSession.session_role == &"SERVER":
+		_broadcast_network_roster()
+
+func _spawn_position_for_peer(peer_id: int) -> Vector3:
+	var spawn_positions: Array[Vector3] = [
+		Vector3(0.0, 0.05, 16.0),
+		Vector3(8.0, 0.05, 16.0),
+		Vector3(-8.0, 0.05, 16.0),
+		Vector3(0.0, 0.05, 8.0),
+		Vector3(12.0, 0.05, 8.0),
+		Vector3(-12.0, 0.05, 8.0),
+		Vector3(5.0, 0.05, 24.0),
+		Vector3(-5.0, 0.05, 24.0)
+	]
+	return spawn_positions[wrapi(peer_id - 1, 0, spawn_positions.size())]
+
+func _broadcast_network_roster() -> void:
+	if NetworkSession.session_role != &"SERVER":
+		return
+	var roster: Array[Dictionary] = []
+	var peer_ids: Array[int] = [1]
+	for peer_id_variant in multiplayer.get_peers():
+		peer_ids.append(int(peer_id_variant))
+	for peer_id in peer_ids:
+		var state: Dictionary = network_player_states.get(peer_id, {
+			"position": _spawn_position_for_peer(peer_id),
+			"yaw": 0.0,
+			"received_at": Time.get_ticks_msec() * 0.001
+		})
+		roster.append({
+			"peer_id": peer_id,
+			"position": state.get("position", _spawn_position_for_peer(peer_id)),
+			"yaw": float(state.get("yaw", 0.0))
+		})
+	_apply_network_roster(roster)
+	if not multiplayer.get_peers().is_empty():
+		rpc("_receive_network_roster", roster)
+
+@rpc("authority", "call_remote", "reliable")
+func _receive_network_roster(roster: Array) -> void:
+	_apply_network_roster(roster)
+
+func _apply_network_roster(roster: Array) -> void:
+	var local_id := multiplayer.get_unique_id()
+	var seen: Dictionary = {}
+	for entry_variant in roster:
+		if not entry_variant is Dictionary:
+			continue
+		var entry: Dictionary = entry_variant
+		var peer_id := int(entry.get("peer_id", 0))
+		if peer_id <= 0:
+			continue
+		seen[peer_id] = true
+		var player_position: Vector3 = entry.get("position", _spawn_position_for_peer(peer_id))
+		var player_yaw := float(entry.get("yaw", 0.0))
+		network_player_states[peer_id] = {
+			"position": player_position,
+			"yaw": player_yaw,
+			"received_at": Time.get_ticks_msec() * 0.001
+		}
+		if peer_id != local_id:
+			_ensure_network_avatar(peer_id, player_position)
+	for peer_id_variant in network_player_avatars.keys():
+		var peer_id := int(peer_id_variant)
+		if not seen.has(peer_id) or peer_id == local_id:
+			var avatar: Node = network_player_avatars.get(peer_id)
+			if is_instance_valid(avatar):
+				avatar.queue_free()
+			network_player_avatars.erase(peer_id)
+
+func _ensure_network_avatar(peer_id: int, initial_position: Vector3) -> Node3D:
+	var existing: Node3D = network_player_avatars.get(peer_id) as Node3D
+	if is_instance_valid(existing):
+		return existing
+	var avatar := Node3D.new()
+	avatar.name = "RemotePlayer_%d" % peer_id
+
+	var body := MeshInstance3D.new()
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.39
+	body_mesh.height = 1.8
+	body.mesh = body_mesh
+	body.position.y = 0.93
+	var body_material := StandardMaterial3D.new()
+	body_material.albedo_color = Color.from_hsv(fposmod(float(peer_id) * 0.19, 1.0), 0.56, 0.78)
+	body_material.roughness = 0.78
+	body.material_override = body_material
+	avatar.add_child(body)
+
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.22
+	head_mesh.height = 0.44
+	head.mesh = head_mesh
+	head.position.y = 1.92
+	var head_material := StandardMaterial3D.new()
+	head_material.albedo_color = Color(0.72, 0.52, 0.38)
+	head.material_override = head_material
+	avatar.add_child(head)
+
+	var name_label := Label3D.new()
+	name_label.text = "PLAYER %02d" % peer_id
+	name_label.position = Vector3(0.0, 2.35, 0.0)
+	name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	name_label.font_size = 28
+	name_label.pixel_size = 0.006
+	name_label.modulate = Color(0.92, 0.97, 0.91)
+	avatar.add_child(name_label)
+
+	add_child(avatar)
+	avatar.global_position = initial_position
+	network_player_avatars[peer_id] = avatar
+	return avatar
+
+func _clear_network_avatars() -> void:
+	for avatar_variant in network_player_avatars.values():
+		var avatar: Node = avatar_variant
+		if is_instance_valid(avatar):
+			avatar.queue_free()
+	network_player_avatars.clear()
+
+func _process_network_replication(delta: float) -> void:
+	var smoothing := clampf(delta * 14.0, 0.0, 1.0)
+	for peer_id_variant in network_player_avatars.keys():
+		var peer_id := int(peer_id_variant)
+		var avatar: Node3D = network_player_avatars.get(peer_id) as Node3D
+		var state: Dictionary = network_player_states.get(peer_id, {})
+		if is_instance_valid(avatar) and not state.is_empty():
+			var target_position: Vector3 = state.get("position", avatar.global_position)
+			var target_yaw := float(state.get("yaw", avatar.rotation.y))
+			avatar.global_position = avatar.global_position.lerp(target_position, smoothing)
+			avatar.rotation.y = lerp_angle(avatar.rotation.y, target_yaw, smoothing)
+
+	if NetworkSession.session_role not in [&"SERVER", &"CLIENT"]:
+		return
+	network_sync_elapsed += delta
+	if network_sync_elapsed < NETWORK_SYNC_INTERVAL:
+		return
+	network_sync_elapsed = 0.0
+	var local_player := get_node_or_null("Player") as Node3D
+	if not is_instance_valid(local_player):
+		return
+	var position_now := local_player.global_position
+	var yaw_now := local_player.rotation.y
+	if NetworkSession.session_role == &"CLIENT":
+		rpc_id(1, "_server_submit_player_state", position_now, yaw_now)
+	elif NetworkSession.session_role == &"SERVER":
+		network_player_states[1] = {
+			"position": position_now,
+			"yaw": yaw_now,
+			"received_at": Time.get_ticks_msec() * 0.001
+		}
+		if not multiplayer.get_peers().is_empty():
+			rpc("_receive_player_state", 1, position_now, yaw_now)
+
+@rpc("any_peer", "call_remote", "unreliable_ordered")
+func _server_submit_player_state(player_position: Vector3, player_yaw: float) -> void:
+	if NetworkSession.session_role != &"SERVER" or not multiplayer.is_server():
+		return
+	var sender_id := multiplayer.get_remote_sender_id()
+	if sender_id <= 1 or not network_player_states.has(sender_id):
+		return
+	if not (
+		absf(player_position.x) <= 45.0
+		and absf(player_position.z) <= 45.0
+		and player_position.y >= -5.0
+		and player_position.y <= 20.0
+	):
+		return
+
+	var now := Time.get_ticks_msec() * 0.001
+	var previous: Dictionary = network_player_states.get(sender_id, {})
+	var previous_position: Vector3 = previous.get("position", _spawn_position_for_peer(sender_id))
+	var previous_time := float(previous.get("received_at", now))
+	if previous_time > 0.0:
+		var elapsed := clampf(now - previous_time, 0.05, 0.75)
+		var max_distance := 14.0 * elapsed + 2.0
+		if previous_position.distance_to(player_position) > max_distance:
+			return
+
+	var safe_yaw := wrapf(player_yaw, -PI, PI)
+	network_player_states[sender_id] = {
+		"position": player_position,
+		"yaw": safe_yaw,
+		"received_at": now
+	}
+	if not multiplayer.get_peers().is_empty():
+		rpc("_receive_player_state", sender_id, player_position, safe_yaw)
+
+@rpc("authority", "call_remote", "unreliable_ordered")
+func _receive_player_state(peer_id: int, player_position: Vector3, player_yaw: float) -> void:
+	if peer_id <= 0:
+		return
+	var local_id := multiplayer.get_unique_id()
+	network_player_states[peer_id] = {
+		"position": player_position,
+		"yaw": player_yaw,
+		"received_at": Time.get_ticks_msec() * 0.001
+	}
+	if peer_id != local_id:
+		_ensure_network_avatar(peer_id, player_position)
+
 
 func _update_hud() -> void:
 	if not is_instance_valid(status_label):
