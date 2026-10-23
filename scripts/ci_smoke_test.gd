@@ -40,6 +40,27 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var quality_button: Button = main_scene.get_node_or_null("GameHUD/GraphicsQualityButton") as Button
+	if quality_button == null or quality_button.text != "QUALITY: BALANCED":
+		push_error("SMOKE TEST: Balanced graphics preset was not selected initially")
+		quit(1)
+		return
+	main_scene.call("_cycle_graphics_quality")
+	if quality_button.text != "QUALITY: HIGH":
+		push_error("SMOKE TEST: High graphics preset did not activate")
+		quit(1)
+		return
+	main_scene.call("_cycle_graphics_quality")
+	if quality_button.text != "QUALITY: LOW" or bool(main_scene.get("sun_light").get("shadow_enabled")):
+		push_error("SMOKE TEST: Low graphics preset did not disable shadows")
+		quit(1)
+		return
+	main_scene.call("_cycle_graphics_quality")
+	if quality_button.text != "QUALITY: BALANCED" or not bool(main_scene.get("sun_light").get("shadow_enabled")):
+		push_error("SMOKE TEST: Balanced graphics preset did not restore shadows")
+		quit(1)
+		return
+
 	if not player.has_method("toggle_camera_mode"):
 		push_error("SMOKE TEST: Player camera toggle method is missing")
 		quit(1)
