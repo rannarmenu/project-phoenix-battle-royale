@@ -447,7 +447,6 @@ func _build_network_panel(layer: CanvasLayer) -> void:
 	network_port_input.placeholder_text = "UDP port (1024-65535)"
 	network_port_input.text = str(NetworkSession.DEFAULT_PORT)
 	network_port_input.max_length = 5
-	network_port_input.input_filter = "0123456789"
 	layout.add_child(network_port_input)
 
 	var button_row := HBoxContainer.new()
@@ -529,9 +528,9 @@ func _set_network_status(message: String) -> void:
 
 func _on_network_session_changed(role: StringName, message: String) -> void:
 	_set_network_status("%s — %s" % [str(role), message])
+	var local_player := get_node_or_null("Player") as Node3D
 	if role == &"SERVER":
 		network_player_states.clear()
-		var local_player := get_node_or_null("Player") as Node3D
 		if is_instance_valid(local_player):
 			network_player_states[1] = {
 				"position": local_player.global_position,
@@ -540,7 +539,6 @@ func _on_network_session_changed(role: StringName, message: String) -> void:
 			}
 		_broadcast_network_roster()
 	elif role == &"CLIENT":
-		var local_player := get_node_or_null("Player") as Node3D
 		if is_instance_valid(local_player):
 			var local_id := multiplayer.get_unique_id()
 			local_player.global_position = _spawn_position_for_peer(local_id)
@@ -641,6 +639,10 @@ func _apply_network_roster(roster: Array) -> void:
 			if is_instance_valid(avatar):
 				avatar.queue_free()
 			network_player_avatars.erase(peer_id)
+	for state_peer_variant in network_player_states.keys():
+		var state_peer_id := int(state_peer_variant)
+		if not seen.has(state_peer_id) and state_peer_id != local_id:
+			network_player_states.erase(state_peer_id)
 
 func _ensure_network_avatar(peer_id: int, initial_position: Vector3) -> Node3D:
 	var existing: Node3D = network_player_avatars.get(peer_id) as Node3D
