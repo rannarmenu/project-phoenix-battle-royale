@@ -6,8 +6,9 @@
 - [x] First-person / third-person camera toggle
 - [x] Hitscan shooting, ammo/reload HUD and destructible targets
 - [x] On-screen action buttons and initial Android touch movement/aim
-- [x] Add automated Godot 4.7.2 regression tests for arena, camera, bots, combat, loot, inventory, zone damage and control helpers
-- [ ] Test touch behavior, visual joystick and camera collision on a real Android device
+- [x] Add automated Godot 4.7.2 regression tests for arena, camera, bots, combat systems, loot, inventory, safe-zone behavior, joystick clamping, sprint toggle and five weapon profiles/ammo persistence
+- [x] Verify latest automated baseline on GitHub Actions (Godot 4.7.2 import + gameplay smoke test; run 40008888210 passed)
+- [ ] Test touch behavior, visual joystick, camera collision and sustained performance on a real Android device (not yet verified)
 
 ## Stage 2 — Shooter feel
 - [x] Dynamic visual virtual joystick with clamped movement direction (headless-tested)
@@ -43,4 +44,4 @@
 - [ ] Privacy policy, crash reporting and release checklist
 
 ## Performance direction
-Use Godot's Compatibility renderer as the starting point. Prefer efficient geometry and materials, then increase visual quality only after profiling. Godot 4.7.2 headless import and gameplay smoke tests pass. Physical Android testing, multiplayer and APK packaging remain outstanding.
+Use Godot's Compatibility renderer as the starting point. Prefer efficient geometry and materials, then increase visual quality only after profiling. Godot 4.7.2 headless import and gameplay smoke tests pass (latest verified run: https://github.com/rannarmenu/project-phoenix-battle-royale/actions/runs/40008888210). This is an automated baseline, not proof of Android device behavior. Physical Android testing, online multiplayer and APK/AAB packaging remain outstanding. Work is to proceed in stage order, with a passing test gate before each stage is considered complete.
