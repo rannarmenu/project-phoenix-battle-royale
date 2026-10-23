@@ -12,6 +12,7 @@ const JOYSTICK_RADIUS := 88.0
 
 var camera: Camera3D
 var camera_pivot: Node3D
+var spring_arm: SpringArm3D
 var weapon: MeshInstance3D
 var touch_move_index := -1
 var touch_look_index := -1
@@ -24,10 +25,13 @@ var is_mobile := false
 var ammo := 30
 var reserve_ammo := 120
 var health := 100
+var spawn_position := Vector3.ZERO
 var hud_label: Label
 
 func _ready() -> void:
 	is_mobile = OS.has_feature("android") or OS.has_feature("ios")
+	spawn_position = global_position
+	add_to_group("player")
 	_make_player_body()
 	_make_camera_and_weapon()
 	_configure_input()
@@ -76,11 +80,18 @@ func _make_camera_and_weapon() -> void:
 	camera_pivot.position = Vector3(0.0, 1.55, 0.0)
 	add_child(camera_pivot)
 
+	spring_arm = SpringArm3D.new()
+	spring_arm.name = "ThirdPersonSpringArm"
+	spring_arm.spring_length = 4.2
+	spring_arm.margin = 0.18
+	spring_arm.collision_mask = 1
+	camera_pivot.add_child(spring_arm)
+
 	camera = Camera3D.new()
 	camera.name = "PlayerCamera"
 	camera.current = true
 	camera.fov = 76.0
-	camera_pivot.add_child(camera)
+	spring_arm.add_child(camera)
 
 	weapon = MeshInstance3D.new()
 	weapon.name = "PrototypeRifle"
@@ -190,8 +201,10 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 			touch_move_index = event.index
 			touch_move_origin = event.position
 			touch_move_vector = Vector2.ZERO
-		elif event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.72 and touch_look_index == -1:
-			touch_look_index = event.index
+		else:
+			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 260.0
+			if not touching_action_buttons and event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.82 and touch_look_index == -1:
+				touch_look_index = event.index
 	else:
 		if event.index == touch_move_index:
 			touch_move_index = -1
@@ -237,7 +250,8 @@ func toggle_camera_mode() -> void:
 func _update_camera_mode() -> void:
 	if not is_instance_valid(camera):
 		return
-	camera.position = Vector3(0.0, 0.0, 0.08) if first_person else Vector3(0.0, 0.55, 4.2)
+	spring_arm.spring_length = 0.0 if first_person else 4.2
+	camera.position = Vector3(0.0, 0.0, 0.08) if first_person else Vector3(0.48, 0.0, 0.0)
 	camera.fov = 82.0 if first_person else 74.0
 	weapon.visible = first_person
 	for node in get_children():
@@ -262,6 +276,14 @@ func _shoot() -> void:
 		var collider: Object = hit.get("collider")
 		if is_instance_valid(collider) and collider.has_method("take_damage"):
 			collider.call("take_damage", 34.0)
+
+func take_damage(amount: int) -> void:
+	health = maxi(0, health - amount)
+	if health <= 0:
+		health = 100
+		global_position = spawn_position
+		velocity = Vector3.ZERO
+	_update_hud()
 
 func _reload() -> void:
 	if ammo >= 30 or reserve_ammo <= 0:
