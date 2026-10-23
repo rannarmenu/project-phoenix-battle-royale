@@ -128,6 +128,12 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var poi_signs := main_scene.find_children("POI_*", "Label3D", true, false)
+	if poi_signs.size() != 3:
+		push_error("SMOKE TEST: Expected three named points of interest, got %d" % poi_signs.size())
+		quit(1)
+		return
+
 	var missing_meshes: Array[String] = []
 	var mesh_nodes := main_scene.find_children("*", "MeshInstance3D", true, false)
 	for node in mesh_nodes:
