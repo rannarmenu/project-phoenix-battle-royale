@@ -177,5 +177,47 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, mesh references, ammo pickup/caps/reload, medkit, armor damage reduction, respawn, enemy attack, zone boundaries/shrink/damage validated")
+	var joystick_script: Script = load("res://scripts/virtual_joystick.gd")
+	if joystick_script == null:
+		push_error("SMOKE TEST: Virtual joystick script could not be loaded")
+		quit(1)
+		return
+	var joystick: Control = joystick_script.new()
+	root.add_child(joystick)
+	await process_frame
+	joystick.call("begin_drag", Vector2(100.0, 120.0))
+	if not bool(joystick.get("is_active")):
+		push_error("SMOKE TEST: Virtual joystick did not activate")
+		quit(1)
+		return
+	joystick.call("update_drag", Vector2(300.0, 120.0))
+	var joystick_offset: Vector2 = joystick.get("knob_offset")
+	if not is_equal_approx(joystick_offset.length(), 76.0):
+		push_error("SMOKE TEST: Virtual joystick did not clamp its knob to the radius")
+		quit(1)
+		return
+	var joystick_vector: Vector2 = joystick.call("get_move_vector")
+	if not is_equal_approx(joystick_vector.x, 1.0) or not is_equal_approx(joystick_vector.y, 0.0):
+		push_error("SMOKE TEST: Virtual joystick direction was incorrect")
+		quit(1)
+		return
+	joystick.call("end_drag")
+	if bool(joystick.get("is_active")) or joystick.call("get_move_vector") != Vector2.ZERO:
+		push_error("SMOKE TEST: Virtual joystick did not reset on release")
+		quit(1)
+		return
+	joystick.queue_free()
+
+	player.call("_toggle_mobile_sprint")
+	if not bool(player.get("mobile_sprint_active")):
+		push_error("SMOKE TEST: Sprint toggle did not activate")
+		quit(1)
+		return
+	player.call("_toggle_mobile_sprint")
+	if bool(player.get("mobile_sprint_active")):
+		push_error("SMOKE TEST: Sprint toggle did not deactivate")
+		quit(1)
+		return
+
+	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick and sprint toggle validated")
 	quit(0)
