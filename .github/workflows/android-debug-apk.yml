@@ -8,6 +8,7 @@ on:
       - "export_presets.cfg"
       - "scenes/**"
       - "scripts/**"
+      - "assets/**"
       - ".github/workflows/android-debug-apk.yml"
   workflow_dispatch:
 
@@ -104,15 +105,14 @@ jobs:
 
       - name: Import project and export debug APK
         shell: bash
-        env:
-          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.home }}/.android/phoenix-debug.keystore
-          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
-          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           set -euo pipefail
           mkdir -p build/android
           godot --headless --editor --path . --quit
-          godot --headless --path . --export-debug "Android Debug" build/android/phoenix-debug.apk
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH="${HOME}/.android/phoenix-debug.keystore" \
+            GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
+            GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
+            godot --headless --path . --export-debug "Android Debug" build/android/phoenix-debug.apk
           test -s build/android/phoenix-debug.apk
           unzip -t build/android/phoenix-debug.apk >/dev/null
           file build/android/phoenix-debug.apk
