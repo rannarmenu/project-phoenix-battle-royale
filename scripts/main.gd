@@ -228,13 +228,18 @@ func _spawn_loot() -> void:
 		Vector3(1.0, 0.0, -24.0),
 		Vector3(24.0, 0.0, -10.0),
 		Vector3(-24.0, 0.0, -21.0),
-		Vector3(5.0, 0.0, 24.0)
+		Vector3(5.0, 0.0, 24.0),
+		Vector3(-5.0, 0.0, 4.0),
+		Vector3(7.0, 0.0, -8.0),
+		Vector3(-11.0, 0.0, -19.0),
+		Vector3(20.0, 0.0, 11.0)
 	]
 	var item_types: Array[StringName] = [
 		&"ammo", &"medkit", &"armor", &"ammo",
-		&"armor", &"medkit", &"ammo", &"medkit"
+		&"armor", &"medkit", &"ammo", &"medkit",
+		&"weapon_smg", &"weapon_shotgun", &"weapon_sniper", &"weapon_pistol"
 	]
-	var amounts: Array[int] = [45, 1, 35, 30, 40, 1, 60, 1]
+	var amounts: Array[int] = [45, 1, 35, 30, 40, 1, 60, 1, 60, 24, 10, 36]
 	for index in range(positions.size()):
 		var pickup: Node3D = LootScript.new()
 		pickup.name = "Loot_%02d" % (index + 1)
