@@ -201,7 +201,8 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 
 func _handle_screen_drag(event: InputEventScreenDrag) -> void:
 	if event.index == touch_move_index:
-		touch_move_vector = ((event.position - touch_move_origin) / JOYSTICK_RADIUS).limit_length(1.0)
+		var drag_vector: Vector2 = (event.position - touch_move_origin) / JOYSTICK_RADIUS
+		touch_move_vector = Vector2(drag_vector.x, -drag_vector.y).limit_length(1.0)
 	elif event.index == touch_look_index:
 		_apply_look(event.relative, TOUCH_LOOK_SENSITIVITY)
 
@@ -213,7 +214,7 @@ func _apply_look(relative_motion: Vector2, sensitivity: float) -> void:
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
-	elif jump_requested:
+	if jump_requested and is_on_floor():
 		velocity.y = JUMP_SPEED
 	jump_requested = false
 
