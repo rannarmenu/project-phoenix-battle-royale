@@ -14,7 +14,8 @@
 - [x] Dynamic visual virtual joystick with clamped movement direction (headless-tested)
 - [x] Mobile sprint toggle and action buttons isolated from aim-touch area
 - [ ] Verify joystick rendering, aim feel and button layout on a real Android device
-- [ ] Weapon recoil, muzzle flash, reload animation, hit markers and sound
+- [x] Basic weapon recoil, muzzle flash and hit markers
+- [ ] Reload animation, weapon audio and richer hit effects
 - [x] Moving enemy AI, player damage and respawn
 - [ ] Advanced enemy cover behavior / pathfinding
 - [ ] Rigged character, animations, original weapon assets and better UI
@@ -26,15 +27,18 @@
 - [x] Medkit healing and armor damage reduction
 - [ ] Loot containers, multi-slot inventory, and weapon pickups
 - [x] Safe-zone shrink, boundary ring, HUD status and outside-zone damage
-- [ ] Multi-phase match timer, final circle and match-end conditions
-- [ ] Match phases, kill feed and victory/defeat screen
+- [x] Match timer, match-end state, kill feed and victory/defeat/retry screen
+- [ ] Multi-phase match flow, final circle and advanced loot containers
 
 ## Stage 4 — Multiplayer
-- [ ] Choose authoritative server architecture and hosting budget
-- [ ] Player identity, lobby/room flow and matchmaking
-- [ ] Server-validated movement, shooting, damage and inventory
-- [ ] Reconnect handling, latency compensation and abuse mitigation
-- [ ] Test with multiple clients and different network conditions
+- [x] Select ENet/UDP session layer and implement host/join/leave UI
+- [x] Implement roster-driven remote avatars and position/yaw replication prototype
+- [x] Add basic server-side position bounds and speed sanity checks
+- [x] Add CI coverage for online UI, port validation, and remote avatar create/remove lifecycle
+- [ ] Server-authoritative movement simulation and combat validation
+- [ ] Replicate bots, shooting, health, loot, safe zone, match clock and results
+- [ ] Production lobby/room flow, player accounts, reconnects and dedicated hosting
+- [ ] Two-device tests, packet-loss/latency tests, and abuse/rate-limit hardening
 
 ## Stage 5 — Android release
 - [ ] Profile CPU, GPU, memory, battery and thermals on target devices
@@ -44,4 +48,4 @@
 - [ ] Privacy policy, crash reporting and release checklist
 
 ## Performance direction
-Use Godot's Compatibility renderer as the starting point. Prefer efficient geometry and materials, then increase visual quality only after profiling. Godot 4.7.2 headless import and gameplay smoke tests pass (latest verified run: https://github.com/rannarmenu/project-phoenix-battle-royale/actions/runs/40008888210). This is an automated baseline, not proof of Android device behavior. Physical Android testing, online multiplayer and APK/AAB packaging remain outstanding. Work is to proceed in stage order, with a passing test gate before each stage is considered complete.
+Use Godot's Compatibility renderer as the starting point. Prefer efficient geometry and materials, then increase visual quality only after profiling. CI validates the Godot project and smoke tests after each commit. Automated checks are not proof of physical Android behavior or a real two-device online match. Full authoritative multiplayer, physical Android testing and APK/AAB packaging remain outstanding. Work is to proceed in stage order, with a passing test gate before each stage is considered complete.
