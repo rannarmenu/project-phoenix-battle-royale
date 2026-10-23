@@ -26,7 +26,7 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	var targets: Array[Node] = main_scene.find_children("Target_*", "StaticBody3D", true, false)
+	var targets: Array[Node] = main_scene.find_children("Target_*", "CharacterBody3D", true, false)
 	if targets.size() != 6:
 		push_error("SMOKE TEST: Expected 6 targets, got %d" % targets.size())
 		quit(1)
@@ -65,5 +65,27 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, player, camera toggle, targets and mesh references validated")
+	var test_target: Node = targets[0]
+	if not test_target.has_method("take_damage"):
+		push_error("SMOKE TEST: Bot damage method is missing")
+		quit(1)
+		return
+	test_target.call("take_damage", 34.0)
+	if int(test_target.get("health")) != 66:
+		push_error("SMOKE TEST: Bot health did not decrease after a hit")
+		quit(1)
+		return
+	test_target.call("take_damage", 66.0)
+	if int(main_scene.get("eliminated_count")) != 1:
+		push_error("SMOKE TEST: Target elimination counter did not increment")
+		quit(1)
+		return
+
+	player.call("take_damage", 999)
+	if int(player.get("health")) != 100:
+		push_error("SMOKE TEST: Player did not respawn at full health")
+		quit(1)
+		return
+
+	print("PHOENIX_SMOKE_TEST_OK: arena, player, camera toggle, targets and mesh references, combat damage and respawn validated")
 	quit(0)
