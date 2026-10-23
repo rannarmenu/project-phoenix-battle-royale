@@ -19,7 +19,8 @@
 - [x] Moving enemy AI, player damage and respawn
 - [x] Basic raycast obstacle-aware enemy steering with side-route selection
 - [ ] Navigation-mesh pathfinding and tactical cover-seeking behavior
-- [ ] Rigged character, animations, original weapon assets and better UI
+- [x] Stylized tactical player/enemy silhouettes and live tactical mini-map with safe-zone/enemy/loot markers
+- [ ] Rigged character animation, original high-quality weapon assets, material textures and advanced UI polish
 - [x] Pause/resume/restart menu, live aim sensitivity slider and graphics quality presets
 
 ## Stage 3 — Battle-royale loop

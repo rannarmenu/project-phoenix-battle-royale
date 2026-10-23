@@ -5,9 +5,12 @@ const TargetScript = preload("res://scripts/target.gd")
 const LootScript = preload("res://scripts/loot_pickup.gd")
 const LootCrateScript = preload("res://scripts/loot_crate.gd")
 const SafeZoneScript = preload("res://scripts/safe_zone.gd")
+const MinimapScript = preload("res://scripts/minimap.gd")
 
 var status_label: Label
 var kill_feed_label: Label
+var combat_stats_label: Label
+var tactical_minimap: Control
 var eliminated_count: int = 0
 var total_targets: int = 0
 var safe_zone: Node3D
@@ -384,6 +387,7 @@ func _build_hud() -> void:
 
 	_build_network_panel(layer)
 	_build_pause_menu(layer)
+	_build_tactical_hud(layer)
 
 	var crosshair := Label.new()
 	crosshair.text = "+"
@@ -400,6 +404,36 @@ func _build_hud() -> void:
 	crosshair.add_theme_font_size_override("font_size", 30)
 	crosshair.add_theme_color_override("font_color", Color(0.95, 0.98, 0.89, 0.9))
 	layer.add_child(crosshair)
+
+func _build_tactical_hud(layer: CanvasLayer) -> void:
+	tactical_minimap = MinimapScript.new() as Control
+	tactical_minimap.name = "TacticalMinimap"
+	tactical_minimap.anchor_left = 1.0
+	tactical_minimap.anchor_right = 1.0
+	tactical_minimap.anchor_top = 1.0
+	tactical_minimap.anchor_bottom = 1.0
+	tactical_minimap.offset_left = -188.0
+	tactical_minimap.offset_right = -20.0
+	tactical_minimap.offset_top = -194.0
+	tactical_minimap.offset_bottom = -26.0
+	tactical_minimap.z_index = 4
+	layer.add_child(tactical_minimap)
+
+	combat_stats_label = Label.new()
+	combat_stats_label.name = "CombatStats"
+	combat_stats_label.anchor_left = 1.0
+	combat_stats_label.anchor_right = 1.0
+	combat_stats_label.anchor_top = 1.0
+	combat_stats_label.anchor_bottom = 1.0
+	combat_stats_label.offset_left = -190.0
+	combat_stats_label.offset_right = -18.0
+	combat_stats_label.offset_top = -218.0
+	combat_stats_label.offset_bottom = -198.0
+	combat_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	combat_stats_label.add_theme_font_size_override("font_size", 13)
+	combat_stats_label.add_theme_color_override("font_color", Color(0.88, 0.94, 0.84))
+	combat_stats_label.text = "ALIVE  07   /   ELIMS  00"
+	layer.add_child(combat_stats_label)
 
 func _on_target_eliminated() -> void:
 	if match_state != &"IN_PROGRESS":
@@ -977,6 +1011,12 @@ func _update_hud() -> void:
 	var player_lives: int = int(player.get("lives_remaining")) if is_instance_valid(player) else 0
 	var time_left: int = maxi(0, int(ceil(match_duration - match_elapsed)))
 	var clock_text := "%02d:%02d" % [int(time_left / 60), time_left % 60]
-	status_label.text = "PHOENIX  |  %s\nTARGETS: %d / %d   LIVES: %d   TIME: %s\n%s" % [
-		str(match_state), eliminated_count, total_targets, player_lives, clock_text, zone_text
+	var alive_count := get_tree().get_nodes_in_group("enemy_bots").size()
+	if is_instance_valid(player) and player_lives > 0:
+		alive_count += 1
+	alive_count += network_player_avatars.size()
+	status_label.text = "PHOENIX  /  BATTLE SIM  |  %s\nALIVE: %02d   ELIMS: %02d   LIVES: %d   TIME: %s\n%s" % [
+		str(match_state), alive_count, eliminated_count, player_lives, clock_text, zone_text
 	]
+	if is_instance_valid(combat_stats_label):
+		combat_stats_label.text = "ALIVE  %02d   /   ELIMS  %02d" % [alive_count, eliminated_count]

@@ -62,6 +62,76 @@ func _make_body() -> void:
 	head_mesh_node.material_override = head_material
 	add_child(head_mesh_node)
 
+	var armor_plate := MeshInstance3D.new()
+	armor_plate.name = "BotArmor"
+	var armor_mesh := BoxMesh.new()
+	armor_mesh.size = Vector3(0.57, 0.57, 0.24)
+	armor_plate.mesh = armor_mesh
+	armor_plate.position = Vector3(0.0, 1.22, -0.13)
+	var armor_material := StandardMaterial3D.new()
+	armor_material.albedo_color = Color(0.29, 0.18, 0.14)
+	armor_material.metallic = 0.22
+	armor_material.roughness = 0.68
+	armor_plate.material_override = armor_material
+	add_child(armor_plate)
+
+	for side in [-1.0, 1.0]:
+		var shoulder := MeshInstance3D.new()
+		shoulder.name = "BotShoulder_%s" % ("L" if side < 0.0 else "R")
+		var shoulder_mesh := SphereMesh.new()
+		shoulder_mesh.radius = 0.22
+		shoulder_mesh.height = 0.34
+		shoulder.mesh = shoulder_mesh
+		shoulder.scale = Vector3(1.0, 0.8, 1.0)
+		shoulder.position = Vector3(side * 0.43, 1.54, -0.035)
+		var shoulder_material := StandardMaterial3D.new()
+		shoulder_material.albedo_color = Color(0.42, 0.16, 0.12)
+		shoulder_material.roughness = 0.65
+		shoulder.material_override = shoulder_material
+		add_child(shoulder)
+
+	var helmet := MeshInstance3D.new()
+	helmet.name = "BotHelmet"
+	var helmet_mesh := SphereMesh.new()
+	helmet_mesh.radius = 0.25
+	helmet_mesh.height = 0.32
+	helmet_mesh.scale = Vector3(1.0, 0.72, 1.05)
+	helmet.mesh = helmet_mesh
+	helmet.position = Vector3(0.0, 2.02, 0.015)
+	var helmet_material := StandardMaterial3D.new()
+	helmet_material.albedo_color = Color(0.16, 0.19, 0.19)
+	helmet_material.metallic = 0.28
+	helmet_material.roughness = 0.5
+	helmet.material_override = helmet_material
+	add_child(helmet)
+
+	var visor := MeshInstance3D.new()
+	visor.name = "BotVisor"
+	var visor_mesh := BoxMesh.new()
+	visor_mesh.size = Vector3(0.29, 0.065, 0.055)
+	visor.mesh = visor_mesh
+	visor.position = Vector3(0.0, 1.94, -0.19)
+	var visor_material := StandardMaterial3D.new()
+	visor_material.albedo_color = Color(0.52, 0.12, 0.075)
+	visor_material.emission_enabled = true
+	visor_material.emission = Color(0.25, 0.025, 0.01)
+	visor_material.emission_energy_multiplier = 0.45
+	visor_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	visor.material_override = visor_material
+	add_child(visor)
+
+	var belt := MeshInstance3D.new()
+	belt.name = "BotUtilityBelt"
+	var belt_mesh := BoxMesh.new()
+	belt_mesh.size = Vector3(0.54, 0.11, 0.27)
+	belt.mesh = belt_mesh
+	belt.position = Vector3(0.0, 0.92, -0.015)
+	var belt_material := StandardMaterial3D.new()
+	belt_material.albedo_color = Color(0.13, 0.12, 0.11)
+	belt_material.metallic = 0.12
+	belt.material_override = belt_material
+	add_child(belt)
+
 	health_label = Label3D.new()
 	health_label.text = "BOT  %d HP" % int(health)
 	health_label.position = Vector3(0.0, 2.25, 0.0)

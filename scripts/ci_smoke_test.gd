@@ -45,6 +45,28 @@ func _run_smoke_test() -> void:
 		return
 	bot.set("strafe_phase", old_strafe_phase)
 
+	var minimap: Control = main_scene.find_child("TacticalMinimap", true, false) as Control
+	var combat_stats: Label = main_scene.find_child("CombatStats", true, false) as Label
+	var player_visual: Node3D = main_scene.find_child("PhoenixPlayerVisual", true, false) as Node3D
+	var third_person_weapon: Node3D = main_scene.find_child("ThirdPersonWeapon", true, false) as Node3D
+	var bot_armor: Node3D = main_scene.find_child("BotArmor", true, false) as Node3D
+	if minimap == null or minimap.get_script() == null or combat_stats == null:
+		push_error("SMOKE TEST: Tactical minimap or alive/elimination HUD was not created")
+		quit(1)
+		return
+	if player_visual == null or third_person_weapon == null:
+		push_error("SMOKE TEST: Player tactical model or third-person weapon model was not created")
+		quit(1)
+		return
+	if bot_armor == null or main_scene.find_child("BotHelmet", true, false) == null:
+		push_error("SMOKE TEST: Enemy tactical armor/helmet model was not created")
+		quit(1)
+		return
+	if not combat_stats.text.contains("ALIVE") or not combat_stats.text.contains("ELIMS"):
+		push_error("SMOKE TEST: Tactical combat stats did not show alive and eliminations")
+		quit(1)
+		return
+
 	var match_hud: Node = main_scene.get_node_or_null("GameHUD")
 	if match_hud == null:
 		push_error("SMOKE TEST: Match HUD layer was not created")

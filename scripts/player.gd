@@ -20,6 +20,8 @@ var mouse_sensitivity: float = 0.0022
 var touch_look_sensitivity: float = 0.003
 const JOYSTICK_RADIUS := 88.0
 
+var player_visual_root: Node3D
+var third_person_weapon: Node3D
 var camera: Camera3D
 var camera_pivot: Node3D
 var spring_arm: SpringArm3D
@@ -78,6 +80,10 @@ func _make_player_body() -> void:
 	collision.position.y = 0.93
 	add_child(collision)
 
+	player_visual_root = Node3D.new()
+	player_visual_root.name = "PhoenixPlayerVisual"
+	add_child(player_visual_root)
+
 	var body := MeshInstance3D.new()
 	body.name = "PhoenixPlayerBody"
 	var body_mesh := CapsuleMesh.new()
@@ -86,10 +92,10 @@ func _make_player_body() -> void:
 	body.mesh = body_mesh
 	body.position.y = 0.93
 	var body_material := StandardMaterial3D.new()
-	body_material.albedo_color = Color(0.09, 0.36, 0.29)
-	body_material.roughness = 0.8
+	body_material.albedo_color = Color(0.10, 0.25, 0.22)
+	body_material.roughness = 0.86
 	body.material_override = body_material
-	add_child(body)
+	player_visual_root.add_child(body)
 
 	var head := MeshInstance3D.new()
 	head.name = "PhoenixPlayerHead"
@@ -100,8 +106,111 @@ func _make_player_body() -> void:
 	head.position.y = 1.92
 	var head_material := StandardMaterial3D.new()
 	head_material.albedo_color = Color(0.72, 0.52, 0.38)
+	head_material.roughness = 0.9
 	head.material_override = head_material
-	add_child(head)
+	player_visual_root.add_child(head)
+
+	var helmet := MeshInstance3D.new()
+	helmet.name = "CombatHelmet"
+	var helmet_mesh := SphereMesh.new()
+	helmet_mesh.radius = 0.255
+	helmet_mesh.height = 0.36
+	helmet.mesh = helmet_mesh
+	helmet.scale = Vector3(1.0, 0.72, 1.06)
+	helmet.position = Vector3(0.0, 2.075, 0.015)
+	var helmet_material := StandardMaterial3D.new()
+	helmet_material.albedo_color = Color(0.13, 0.23, 0.2)
+	helmet_material.metallic = 0.12
+	helmet_material.roughness = 0.58
+	helmet.material_override = helmet_material
+	player_visual_root.add_child(helmet)
+
+	_add_model_box(player_visual_root, "HelmetVisor", Vector3(0.30, 0.065, 0.075), Vector3(0.0, 1.995, -0.19), Color(0.035, 0.065, 0.064), 0.35)
+	_add_model_box(player_visual_root, "ChestArmor", Vector3(0.56, 0.61, 0.235), Vector3(0.0, 1.27, -0.14), Color(0.16, 0.28, 0.23), 0.18)
+	_add_model_box(player_visual_root, "ChestArmorPlate", Vector3(0.34, 0.23, 0.045), Vector3(0.0, 1.37, -0.27), Color(0.27, 0.38, 0.31), 0.28)
+	_add_model_box(player_visual_root, "CombatBelt", Vector3(0.53, 0.105, 0.28), Vector3(0.0, 0.94, -0.015), Color(0.19, 0.17, 0.12), 0.1)
+	_add_model_box(player_visual_root, "LeftUtilityPouch", Vector3(0.14, 0.17, 0.105), Vector3(-0.18, 1.12, -0.285), Color(0.35, 0.31, 0.21), 0.04)
+	_add_model_box(player_visual_root, "RightUtilityPouch", Vector3(0.14, 0.17, 0.105), Vector3(0.18, 1.12, -0.285), Color(0.35, 0.31, 0.21), 0.04)
+	_add_model_box(player_visual_root, "TacticalBackpack", Vector3(0.42, 0.58, 0.23), Vector3(0.0, 1.36, 0.255), Color(0.12, 0.22, 0.19), 0.08)
+	_add_model_box(player_visual_root, "BackpackTopFlap", Vector3(0.34, 0.13, 0.25), Vector3(0.0, 1.64, 0.25), Color(0.21, 0.31, 0.24), 0.05)
+
+	_add_model_capsule(player_visual_root, "LeftUpperArm", 0.145, 0.66, Vector3(-0.47, 1.28, -0.015), Color(0.12, 0.29, 0.24), Vector3(0.0, 0.0, -12.0))
+	_add_model_capsule(player_visual_root, "RightUpperArm", 0.145, 0.66, Vector3(0.47, 1.28, -0.015), Color(0.12, 0.29, 0.24), Vector3(0.0, 0.0, 12.0))
+	_add_model_capsule(player_visual_root, "LeftForearm", 0.12, 0.43, Vector3(-0.53, 0.91, -0.09), Color(0.23, 0.29, 0.22), Vector3(0.0, 0.0, -9.0))
+	_add_model_capsule(player_visual_root, "RightForearm", 0.12, 0.43, Vector3(0.53, 0.91, -0.09), Color(0.23, 0.29, 0.22), Vector3(0.0, 0.0, 9.0))
+	_add_model_capsule(player_visual_root, "LeftGlove", 0.105, 0.20, Vector3(-0.55, 0.63, -0.1), Color(0.07, 0.09, 0.08))
+	_add_model_capsule(player_visual_root, "RightGlove", 0.105, 0.20, Vector3(0.55, 0.63, -0.1), Color(0.07, 0.09, 0.08))
+
+	_add_model_sphere(player_visual_root, "LeftShoulderPad", Vector3(0.24, 0.19, 0.25), Vector3(-0.44, 1.55, -0.025), Color(0.22, 0.34, 0.27))
+	_add_model_sphere(player_visual_root, "RightShoulderPad", Vector3(0.24, 0.19, 0.25), Vector3(0.44, 1.55, -0.025), Color(0.22, 0.34, 0.27))
+
+	_add_model_capsule(player_visual_root, "LeftLeg", 0.16, 0.77, Vector3(-0.19, 0.47, 0.025), Color(0.19, 0.23, 0.19))
+	_add_model_capsule(player_visual_root, "RightLeg", 0.16, 0.77, Vector3(0.19, 0.47, 0.025), Color(0.19, 0.23, 0.19))
+	_add_model_box(player_visual_root, "LeftCombatBoot", Vector3(0.25, 0.16, 0.40), Vector3(-0.2, 0.105, -0.055), Color(0.07, 0.085, 0.075), 0.12)
+	_add_model_box(player_visual_root, "RightCombatBoot", Vector3(0.25, 0.16, 0.40), Vector3(0.2, 0.105, -0.055), Color(0.07, 0.085, 0.075), 0.12)
+
+	third_person_weapon = Node3D.new()
+	third_person_weapon.name = "ThirdPersonWeapon"
+	third_person_weapon.position = Vector3(0.44, 1.24, -0.2)
+	third_person_weapon.rotation_degrees = Vector3(-3.0, 0.0, 10.0)
+	player_visual_root.add_child(third_person_weapon)
+	_add_model_box(third_person_weapon, "RifleReceiver", Vector3(0.13, 0.13, 0.46), Vector3(0.0, 0.0, -0.23), Color(0.06, 0.085, 0.08), 0.52)
+	_add_model_box(third_person_weapon, "RifleHandguard", Vector3(0.12, 0.11, 0.24), Vector3(0.0, 0.0, -0.49), Color(0.12, 0.15, 0.13), 0.3)
+	_add_model_box(third_person_weapon, "RifleStock", Vector3(0.11, 0.105, 0.22), Vector3(0.0, 0.0, 0.09), Color(0.16, 0.19, 0.16), 0.12)
+	_add_model_box(third_person_weapon, "RifleMagazine", Vector3(0.095, 0.22, 0.12), Vector3(0.0, -0.14, -0.19), Color(0.1, 0.13, 0.12), 0.44)
+	_add_model_box(third_person_weapon, "RifleBarrel", Vector3(0.055, 0.055, 0.28), Vector3(0.0, 0.0, -0.72), Color(0.035, 0.05, 0.048), 0.78)
+
+func _add_model_box(parent: Node3D, part_name: String, dimensions: Vector3, local_position: Vector3, tint: Color, metallic: float = 0.0) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var part_mesh := BoxMesh.new()
+	part_mesh.size = dimensions
+	part.mesh = part_mesh
+	part.position = local_position
+	var part_material := StandardMaterial3D.new()
+	part_material.albedo_color = tint
+	part_material.metallic = metallic
+	part_material.roughness = 0.72
+	part.material_override = part_material
+	parent.add_child(part)
+	return part
+
+func _add_model_capsule(parent: Node3D, part_name: String, radius: float, height: float, local_position: Vector3, tint: Color, part_rotation: Vector3 = Vector3.ZERO) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var part_mesh := CapsuleMesh.new()
+	part_mesh.radius = radius
+	part_mesh.height = height
+	part_mesh.radial_segments = 10
+	part_mesh.rings = 4
+	part.mesh = part_mesh
+	part.position = local_position
+	part.rotation_degrees = part_rotation
+	var part_material := StandardMaterial3D.new()
+	part_material.albedo_color = tint
+	part_material.roughness = 0.86
+	part.material_override = part_material
+	parent.add_child(part)
+	return part
+
+func _add_model_sphere(parent: Node3D, part_name: String, dimensions: Vector3, local_position: Vector3, tint: Color) -> MeshInstance3D:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var part_mesh := SphereMesh.new()
+	part_mesh.radius = 0.5
+	part_mesh.height = 1.0
+	part_mesh.radial_segments = 12
+	part_mesh.rings = 6
+	part.mesh = part_mesh
+	part.scale = dimensions
+	part.position = local_position
+	var part_material := StandardMaterial3D.new()
+	part_material.albedo_color = tint
+	part_material.metallic = 0.08
+	part_material.roughness = 0.72
+	part.material_override = part_material
+	parent.add_child(part)
+	return part
 
 func _make_camera_and_weapon() -> void:
 	camera_pivot = Node3D.new()
@@ -363,9 +472,8 @@ func _update_camera_mode() -> void:
 	camera.position = Vector3(0.0, 0.0, 0.08) if first_person else Vector3(0.48, 0.0, 0.0)
 	camera.fov = 82.0 if first_person else 74.0
 	weapon.visible = first_person
-	for node in get_children():
-		if node is MeshInstance3D and node.name in ["PhoenixPlayerBody", "PhoenixPlayerHead"]:
-			node.visible = not first_person
+	if is_instance_valid(player_visual_root):
+		player_visual_root.visible = not first_person
 
 func _toggle_mobile_sprint() -> void:
 	mobile_sprint_active = not mobile_sprint_active

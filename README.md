@@ -3,7 +3,10 @@
 A Godot 4 mobile-first 3D shooter prototype with both third-person and first-person camera modes.
 
 ## Implemented in the current prototype
-- Procedurally generated training arena with cover blocks, low-poly pine trees, outdoor sky lighting and three walkable POIs (North Warehouse, East Outpost, South Depot).
+- Procedurally generated training arena with cover blocks, pine trees, outdoor sky lighting and three walkable POIs (North Warehouse, East Outpost, South Depot).
+- Stylized multi-part tactical character models with helmet, armor, backpack, gloves, boots and a third-person rifle silhouette.
+- Enemy bots with armor plates, shoulder pads, helmet and a glowing visor.
+- Live tactical mini-map showing safe zone, players, enemy bots, loot and supply crates; alive/elimination stats.
 - Player capsule and simple prototype rifle.
 - First-person / third-person camera toggle with a collision-aware spring arm.
 - WASD movement, mouse/touch look, jump and desktop sprint.
@@ -40,7 +43,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 ## Automated validation
 GitHub Actions runs a Godot 4.7.2 headless import and gameplay smoke test covering scene creation, player spawn, camera modes, bots, combat, loot/inventory, safe-zone behavior, mobile joystick/sprint, weapon profiles, match victory, network session lifecycle, online-panel validation, and remote-avatar roster creation/removal. The latest run must be checked on the Actions page before treating a commit as verified.
 
-This is **not yet a finished Free Fire-like game**. The smoke test does not verify rendered joystick appearance, real touch behavior, frame rate, thermal performance or gameplay on an Android phone.
+This is **not yet a finished Free Fire-inspired game**. The smoke test does not verify rendered joystick appearance, real touch behavior, frame rate, thermal performance or gameplay on an Android phone.
 
 ## Not implemented yet
 - A complete playable online battle: the current online prototype replicates remote player avatars/positions only. Player movement, bot AI, shooting, damage, loot, zone state and match results are not yet authoritative/shared across clients.
