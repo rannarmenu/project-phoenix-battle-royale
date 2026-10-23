@@ -235,6 +235,10 @@ func _build_hud() -> void:
 		mobile_weapon_button.pressed.connect(func() -> void: switch_weapon())
 		layer.add_child(mobile_weapon_button)
 
+		var loot_button := _make_button("LOOT", Vector2(-154, 426), Vector2(130, 44))
+		loot_button.pressed.connect(func() -> void: _try_open_loot_crate())
+		layer.add_child(loot_button)
+
 		var hint := Label.new()
 		hint.text = "LEFT: MOVE   •   RIGHT: AIM"
 		hint.anchor_left = 0.5
@@ -277,6 +281,8 @@ func _input(event: InputEvent) -> void:
 			toggle_camera_mode()
 		elif event.keycode == KEY_R:
 			_reload()
+		elif event.keycode == KEY_E:
+			_try_open_loot_crate()
 		elif event.keycode == KEY_Q or event.keycode == KEY_TAB:
 			switch_weapon()
 		elif event.keycode >= KEY_1 and event.keycode <= KEY_5:
@@ -298,7 +304,7 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 			if is_instance_valid(joystick_overlay):
 				joystick_overlay.call("begin_drag", event.position)
 		else:
-			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 434.0
+			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 480.0
 			if not touching_action_buttons and event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.82 and touch_look_index == -1:
 				touch_look_index = event.index
 	else:
@@ -462,6 +468,21 @@ func _shoot() -> void:
 			if is_instance_valid(collider) and collider.has_method("take_damage"):
 				collider.call("take_damage", damage)
 				_show_hit_marker()
+
+func _try_open_loot_crate() -> bool:
+	var nearest_crate: Node3D
+	var nearest_distance: float = 4.0
+	for crate_variant in get_tree().get_nodes_in_group("loot_crates"):
+		var crate := crate_variant as Node3D
+		if not is_instance_valid(crate) or not crate.has_method("open_for"):
+			continue
+		var distance := global_position.distance_to(crate.global_position)
+		if distance <= nearest_distance:
+			nearest_distance = distance
+			nearest_crate = crate
+	if is_instance_valid(nearest_crate):
+		return bool(nearest_crate.call("open_for", self))
+	return false
 
 func add_loot(item_type: StringName, amount: int) -> bool:
 	var pickup_amount: int = maxi(1, amount)
