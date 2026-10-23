@@ -35,14 +35,14 @@ func _make_pickup_visual() -> void:
 	material.metallic = 0.18
 	match item_type:
 		&"ammo":
-			var box := BoxMesh.new()
-			box.size = Vector3(0.52, 0.38, 0.38)
-			pickup_mesh.mesh = box
+			var ammo_box := BoxMesh.new()
+			ammo_box.size = Vector3(0.52, 0.38, 0.38)
+			pickup_mesh.mesh = ammo_box
 			material.albedo_color = Color(0.92, 0.62, 0.16)
 		&"medkit":
-			var box := BoxMesh.new()
-			box.size = Vector3(0.48, 0.48, 0.42)
-			pickup_mesh.mesh = box
+			var medkit_box := BoxMesh.new()
+			medkit_box.size = Vector3(0.48, 0.48, 0.42)
+			pickup_mesh.mesh = medkit_box
 			material.albedo_color = Color(0.18, 0.76, 0.43)
 		&"armor":
 			var cylinder := CylinderMesh.new()
@@ -52,9 +52,9 @@ func _make_pickup_visual() -> void:
 			pickup_mesh.mesh = cylinder
 			material.albedo_color = Color(0.18, 0.62, 0.98)
 		_:
-			var box := BoxMesh.new()
-			box.size = Vector3(0.42, 0.42, 0.42)
-			pickup_mesh.mesh = box
+			var fallback_box := BoxMesh.new()
+			fallback_box.size = Vector3(0.42, 0.42, 0.42)
+			pickup_mesh.mesh = fallback_box
 			material.albedo_color = Color(0.8, 0.8, 0.8)
 	pickup_mesh.position.y = 0.75
 	pickup_mesh.material_override = material
