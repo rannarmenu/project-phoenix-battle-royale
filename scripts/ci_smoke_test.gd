@@ -61,6 +61,54 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var online_toggle: Button = main_scene.get_node_or_null("GameHUD/OnlineToggleButton") as Button
+	var network_panel: PanelContainer = main_scene.get_node_or_null("GameHUD/NetworkPanel") as PanelContainer
+	var address_input: LineEdit = main_scene.get_node_or_null("GameHUD/NetworkPanel/VBoxContainer/ServerAddressInput") as LineEdit
+	var port_input: LineEdit = main_scene.get_node_or_null("GameHUD/NetworkPanel/VBoxContainer/ServerPortInput") as LineEdit
+	if online_toggle == null or network_panel == null or address_input == null or port_input == null:
+		push_error("SMOKE TEST: Online host/join UI controls were not created")
+		quit(1)
+		return
+	main_scene.call("_toggle_network_panel")
+	if not network_panel.visible:
+		push_error("SMOKE TEST: Online panel did not open")
+		quit(1)
+		return
+	main_scene.call("_toggle_network_panel")
+	if network_panel.visible:
+		push_error("SMOKE TEST: Online panel did not close")
+		quit(1)
+		return
+	if int(main_scene.call("_read_network_port")) != 24567:
+		push_error("SMOKE TEST: Default network port was not parsed correctly")
+		quit(1)
+		return
+	port_input.text = "not-a-port"
+	if int(main_scene.call("_read_network_port")) != -1:
+		push_error("SMOKE TEST: Invalid network port was not rejected")
+		quit(1)
+		return
+	port_input.text = "24567"
+
+	var network_test_roster: Array[Dictionary] = [
+		{"peer_id": 1, "position": Vector3(0.0, 0.05, 16.0), "yaw": 0.0},
+		{"peer_id": 42, "position": Vector3(3.0, 0.05, 4.0), "yaw": 1.2}
+	]
+	main_scene.call("_apply_network_roster", network_test_roster)
+	var remote_avatar: Node3D = main_scene.get_node_or_null("RemotePlayer_42") as Node3D
+	if remote_avatar == null:
+		push_error("SMOKE TEST: A remote roster member did not create a visible avatar")
+		quit(1)
+		return
+	var roster_without_remote: Array[Dictionary] = [
+		{"peer_id": 1, "position": Vector3(0.0, 0.05, 16.0), "yaw": 0.0}
+	]
+	main_scene.call("_apply_network_roster", roster_without_remote)
+	if main_scene.get_node_or_null("RemotePlayer_42") != null:
+		push_error("SMOKE TEST: Removed roster member avatar was not cleaned up")
+		quit(1)
+		return
+
 	if not player.has_method("toggle_camera_mode"):
 		push_error("SMOKE TEST: Player camera toggle method is missing")
 		quit(1)
