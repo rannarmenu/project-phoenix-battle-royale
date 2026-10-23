@@ -4,10 +4,10 @@ A Godot 4 mobile-first 3D shooter prototype with a camera toggle for both third-
 
 ## Implemented in the current prototype
 - Procedurally generated training arena, ground, cover blocks and basic lighting.
-- Basic player capsule and simple prototype rifle.
-- First-person / third-person camera toggle (V on desktop or CAMERA button).
+- Basic player capsule and prototype rifle positioned for first-person view.
+- First-person / third-person camera toggle with a collision-aware spring arm (V on desktop or CAMERA button).
 - WASD movement, mouse/touch look, jump and sprint on desktop.
-- Hitscan shooting, simple target health, target elimination counter.
+- Hitscan shooting, moving enemy bots that approach and attack, bot health, target elimination counter, player damage and respawn.
 - Basic ammo/reload HUD and on-screen FIRE, JUMP, RELOAD and CAMERA buttons.
 - Godot Compatibility renderer as a performance-conscious starting point.
 
