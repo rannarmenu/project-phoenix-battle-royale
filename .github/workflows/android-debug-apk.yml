@@ -29,8 +29,19 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install Android command-line tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          ANDROID_HOME="${RUNNER_TEMP}/android-sdk"
+          echo "ANDROID_HOME=${ANDROID_HOME}" >> "${GITHUB_ENV}"
+          echo "${ANDROID_HOME}/platform-tools" >> "${GITHUB_PATH}"
+          curl --location --fail --retry 3 \
+            "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" \
+            --output /tmp/android-command-line-tools.zip
+          mkdir -p /tmp/android-command-line-tools "${ANDROID_HOME}/cmdline-tools/latest"
+          unzip -q /tmp/android-command-line-tools.zip -d /tmp/android-command-line-tools
+          cp -a /tmp/android-command-line-tools/cmdline-tools/. "${ANDROID_HOME}/cmdline-tools/latest/"
 
       - name: Install Godot-supported Android SDK packages
         shell: bash
