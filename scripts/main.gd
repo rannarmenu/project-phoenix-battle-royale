@@ -2,18 +2,30 @@ extends Node3D
 
 const PlayerScript = preload("res://scripts/player.gd")
 const TargetScript = preload("res://scripts/target.gd")
+const LootScript = preload("res://scripts/loot_pickup.gd")
+const SafeZoneScript = preload("res://scripts/safe_zone.gd")
 
 var status_label: Label
 var eliminated_count: int = 0
 var total_targets: int = 0
+var safe_zone: Node3D
+var hud_refresh_timer: float = 0.0
 
 func _ready() -> void:
 	_build_environment()
 	_build_arena()
+	_spawn_safe_zone()
 	_spawn_player()
 	_spawn_targets()
+	_spawn_loot()
 	_build_hud()
 	_update_hud()
+
+func _process(delta: float) -> void:
+	hud_refresh_timer += delta
+	if hud_refresh_timer >= 0.25:
+		hud_refresh_timer = 0.0
+		_update_hud()
 
 func _build_environment() -> void:
 	var world_env := WorldEnvironment.new()
@@ -157,6 +169,36 @@ func _add_cover(pos: Vector3, dimensions: Vector3, tint: Color) -> void:
 	collision.position.y = dimensions.y * 0.5
 	body.add_child(collision)
 
+func _spawn_safe_zone() -> void:
+	safe_zone = SafeZoneScript.new()
+	safe_zone.name = "SafeZone"
+	safe_zone.position = Vector3.ZERO
+	add_child(safe_zone)
+
+func _spawn_loot() -> void:
+	var positions: Array[Vector3] = [
+		Vector3(-10.0, 0.0, -1.0),
+		Vector3(10.0, 0.0, -15.0),
+		Vector3(12.0, 0.0, 7.0),
+		Vector3(-18.0, 0.0, 9.0),
+		Vector3(1.0, 0.0, -24.0),
+		Vector3(24.0, 0.0, -10.0),
+		Vector3(-24.0, 0.0, -21.0),
+		Vector3(5.0, 0.0, 24.0)
+	]
+	var item_types: Array[StringName] = [
+		&"ammo", &"medkit", &"armor", &"ammo",
+		&"armor", &"medkit", &"ammo", &"medkit"
+	]
+	var amounts: Array[int] = [45, 1, 35, 30, 40, 1, 60, 1]
+	for index in range(positions.size()):
+		var pickup: Area3D = LootScript.new()
+		pickup.name = "Loot_%02d" % (index + 1)
+		pickup.item_type = item_types[index]
+		pickup.amount = amounts[index]
+		pickup.position = positions[index]
+		add_child(pickup)
+
 func _spawn_player() -> void:
 	var player: CharacterBody3D = PlayerScript.new()
 	player.name = "Player"
@@ -186,8 +228,8 @@ func _build_hud() -> void:
 	add_child(layer)
 
 	status_label = Label.new()
-	status_label.position = Vector2(24.0, 20.0)
-	status_label.add_theme_font_size_override("font_size", 22)
+	status_label.position = Vector2(24.0, 16.0)
+	status_label.add_theme_font_size_override("font_size", 18)
 	status_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.9))
 	layer.add_child(status_label)
 
