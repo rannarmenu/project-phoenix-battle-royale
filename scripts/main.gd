@@ -10,6 +10,10 @@ var eliminated_count: int = 0
 var total_targets: int = 0
 var safe_zone: Node3D
 var hud_refresh_timer: float = 0.0
+var match_elapsed: float = 0.0
+var match_duration: float = 300.0
+var match_state: StringName = &"IN_PROGRESS"
+var match_overlay: PanelContainer
 
 func _ready() -> void:
 	_build_environment()
@@ -22,6 +26,12 @@ func _ready() -> void:
 	_update_hud()
 
 func _process(delta: float) -> void:
+	if match_state != &"IN_PROGRESS":
+		return
+	match_elapsed += delta
+	if match_elapsed >= match_duration:
+		_finish_match(&"TIME UP")
+		return
 	hud_refresh_timer += delta
 	if hud_refresh_timer >= 0.25:
 		hud_refresh_timer = 0.0
@@ -203,6 +213,7 @@ func _spawn_player() -> void:
 	var player: CharacterBody3D = PlayerScript.new()
 	player.name = "Player"
 	player.position = Vector3(0.0, 0.05, 16.0)
+	player.player_eliminated.connect(_on_player_eliminated)
 	add_child(player)
 
 func _spawn_targets() -> void:
@@ -234,7 +245,7 @@ func _build_hud() -> void:
 	layer.add_child(status_label)
 
 	var title := Label.new()
-	title.text = "PHOENIX  /  TRAINING RANGE"
+	title.text = "PHOENIX  /  BATTLE SIM"
 	title.anchor_left = 0.5
 	title.anchor_right = 0.5
 	title.offset_left = -210.0
@@ -263,7 +274,67 @@ func _build_hud() -> void:
 	layer.add_child(crosshair)
 
 func _on_target_eliminated() -> void:
-	eliminated_count += 1
+	if match_state != &"IN_PROGRESS":
+		return
+	eliminated_count = mini(total_targets, eliminated_count + 1)
+	_update_hud()
+	if eliminated_count >= total_targets:
+		_finish_match(&"VICTORY")
+
+func _on_player_eliminated() -> void:
+	_finish_match(&"DEFEAT")
+
+func _finish_match(result: StringName) -> void:
+	if match_state != &"IN_PROGRESS":
+		return
+	match_state = result
+	var player := get_node_or_null("Player")
+	if is_instance_valid(player):
+		player.process_mode = Node.PROCESS_MODE_DISABLED
+		player.set_process_input(false)
+		player.set_process_unhandled_input(false)
+	for bot in get_tree().get_nodes_in_group("enemy_bots"):
+		if is_instance_valid(bot):
+			bot.process_mode = Node.PROCESS_MODE_DISABLED
+	if is_instance_valid(safe_zone):
+		safe_zone.process_mode = Node.PROCESS_MODE_DISABLED
+
+	var layer := CanvasLayer.new()
+	layer.name = "MatchResultLayer"
+	add_child(layer)
+	match_overlay = PanelContainer.new()
+	match_overlay.name = "MatchResultPanel"
+	match_overlay.anchor_left = 0.5
+	match_overlay.anchor_right = 0.5
+	match_overlay.anchor_top = 0.5
+	match_overlay.anchor_bottom = 0.5
+	match_overlay.offset_left = -190.0
+	match_overlay.offset_right = 190.0
+	match_overlay.offset_top = -125.0
+	match_overlay.offset_bottom = 125.0
+	layer.add_child(match_overlay)
+
+	var layout := VBoxContainer.new()
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 14)
+	match_overlay.add_child(layout)
+	var headline := Label.new()
+	headline.text = "MISSION COMPLETE" if result == &"VICTORY" else "MISSION FAILED"
+	headline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	headline.add_theme_font_size_override("font_size", 26)
+	headline.add_theme_color_override("font_color", Color(0.87, 0.78, 0.48) if result == &"VICTORY" else Color(1.0, 0.36, 0.28))
+	layout.add_child(headline)
+	var details := Label.new()
+	details.text = "All enemies eliminated." if result == &"VICTORY" else ("All lives lost." if result == &"DEFEAT" else "The match timer has expired.")
+	details.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	details.add_theme_font_size_override("font_size", 16)
+	layout.add_child(details)
+	var retry := Button.new()
+	retry.text = "PLAY AGAIN"
+	retry.custom_minimum_size = Vector2(150.0, 44.0)
+	retry.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	retry.pressed.connect(func() -> void: get_tree().reload_current_scene())
+	layout.add_child(retry)
 	_update_hud()
 
 func _update_hud() -> void:
