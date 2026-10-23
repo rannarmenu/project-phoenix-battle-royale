@@ -61,10 +61,10 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	var online_toggle: Button = main_scene.get_node_or_null("GameHUD/OnlineToggleButton") as Button
-	var network_panel: PanelContainer = main_scene.get_node_or_null("GameHUD/NetworkPanel") as PanelContainer
-	var address_input: LineEdit = main_scene.get_node_or_null("GameHUD/NetworkPanel/VBoxContainer/ServerAddressInput") as LineEdit
-	var port_input: LineEdit = main_scene.get_node_or_null("GameHUD/NetworkPanel/VBoxContainer/ServerPortInput") as LineEdit
+	var online_toggle: Button = main_scene.find_child("OnlineToggleButton", true, false) as Button
+	var network_panel: PanelContainer = main_scene.find_child("NetworkPanel", true, false) as PanelContainer
+	var address_input: LineEdit = main_scene.find_child("ServerAddressInput", true, false) as LineEdit
+	var port_input: LineEdit = main_scene.find_child("ServerPortInput", true, false) as LineEdit
 	if online_toggle == null or network_panel == null or address_input == null or port_input == null:
 		push_error("SMOKE TEST: Online host/join UI controls were not created")
 		quit(1)
