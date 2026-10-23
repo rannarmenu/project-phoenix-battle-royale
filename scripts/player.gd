@@ -190,7 +190,7 @@ func _build_hud() -> void:
 		layer.add_child(mobile_sprint_button)
 
 		var weapon_button := _make_button("WEAPON", Vector2(-154, 370), Vector2(130, 44))
-		weapon_button.pressed.connect(switch_weapon)
+		weapon_button.pressed.connect(func() -> void: switch_weapon())
 		layer.add_child(weapon_button)
 
 		var hint := Label.new()
