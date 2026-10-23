@@ -47,7 +47,8 @@
 ## Stage 5 — Android release
 - [x] Add an arm64 Android debug export preset
 - [x] Add GitHub Actions workflow to build and upload a debug APK artifact
-- [ ] Verify the APK export workflow on the current main branch and install the APK on a physical phone
+- [x] Verify Android arm64 debug APK export and artifact ZIP integrity (source commit `f4ff988`; [successful run](https://github.com/rannarmenu/project-phoenix-battle-royale/actions/runs/40018547340))
+- [ ] Install the APK on a physical phone and test controls, frame rate, memory, battery and thermals
 - [ ] Profile CPU, GPU, memory, battery and thermals on target devices
 - [ ] Add scalable resolution/rendering settings after device profiling
 - [ ] Configure release keystore safely outside the public repository

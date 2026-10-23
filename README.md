@@ -50,6 +50,8 @@ This is **not yet a finished Free Fire-like game**. The smoke test does not veri
 - Production-quality character models, animations, weapon assets and audio.
 - Signed release APK/AAB and physical-device testing. An automated **debug APK** workflow is available under GitHub Actions; a debug build is not a store-ready release.
 
+**Latest verified Android debug build:** commit `f4ff988` passed the Godot gameplay smoke test and Android arm64 export. Download the `project-phoenix-android-debug-apk` artifact from [this successful GitHub Actions run](https://github.com/rannarmenu/project-phoenix-battle-royale/actions/runs/40018547340). The artifact is a temporary debug-signed build, expires after 7 days, and has not been installed or performance-tested on a physical phone.
+
 ## Next development steps
 1. Implement shared, server-authoritative movement, combat, bots, inventory, safe zone and match outcomes; test with two real clients.
 2. Add lobby/room flow, reconnect handling, server hosting and abuse/rate-limit protection.
