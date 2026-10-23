@@ -120,6 +120,44 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	if player.call("get_current_weapon_name") != "RIFLE":
+		push_error("SMOKE TEST: Rifle should be equipped by default")
+		quit(1)
+		return
+	player.call("switch_weapon", 1)
+	if player.call("get_current_weapon_name") != "SMG" or int(player.get("ammo")) != 36 or int(player.get("reserve_ammo")) != 180:
+		push_error("SMOKE TEST: SMG profile or starting ammo is incorrect")
+		quit(1)
+		return
+	player.set("ammo", 7)
+	player.set("reserve_ammo", 55)
+	player.call("switch_weapon", 2)
+	if player.call("get_current_weapon_name") != "SHOTGUN" or int(player.get("ammo")) != 8 or int(player.get("reserve_ammo")) != 40:
+		push_error("SMOKE TEST: Shotgun profile or starting ammo is incorrect")
+		quit(1)
+		return
+	player.call("switch_weapon", 3)
+	if player.call("get_current_weapon_name") != "SNIPER" or int(player.get("ammo")) != 5 or int(player.get("reserve_ammo")) != 30:
+		push_error("SMOKE TEST: Sniper profile or starting ammo is incorrect")
+		quit(1)
+		return
+	player.call("switch_weapon", 4)
+	if player.call("get_current_weapon_name") != "PISTOL" or int(player.get("ammo")) != 12 or int(player.get("reserve_ammo")) != 60:
+		push_error("SMOKE TEST: Pistol profile or starting ammo is incorrect")
+		quit(1)
+		return
+	player.call("switch_weapon", 0)
+	if player.call("get_current_weapon_name") != "RIFLE" or int(player.get("ammo")) != 30 or int(player.get("reserve_ammo")) != 20:
+		push_error("SMOKE TEST: Rifle ammunition was not preserved after switching")
+		quit(1)
+		return
+	player.call("switch_weapon", 1)
+	if int(player.get("ammo")) != 7 or int(player.get("reserve_ammo")) != 55:
+		push_error("SMOKE TEST: SMG ammunition was not preserved after switching")
+		quit(1)
+		return
+	player.call("switch_weapon", 0)
+
 	player.set("health", 45)
 	player.set("medkits", 0)
 	var medkit_pickup: Node = main_scene.get_node("Loot_02")
@@ -219,5 +257,5 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick and sprint toggle validated")
+	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick, sprint toggle and five weapon profiles/ammo persistence validated")
 	quit(0)
