@@ -304,6 +304,10 @@ func _request_jump() -> void:
 func _update_hud() -> void:
 	if is_instance_valid(hud_label):
 		hud_label.text = "HP %d     AMMO %d / %d" % [health, ammo, reserve_ammo]
+		var text_color := Color(0.9, 0.97, 0.9)
+		if health <= 35:
+			text_color = Color(1.0, 0.32, 0.25)
+		hud_label.add_theme_color_override("font_color", text_color)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and not is_mobile:
