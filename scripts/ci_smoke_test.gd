@@ -133,6 +133,11 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Expected three named points of interest, got %d" % poi_signs.size())
 		quit(1)
 		return
+	var loot_crates := main_scene.find_children("LootCrate_*", "Node3D", true, false)
+	if loot_crates.size() != 3:
+		push_error("SMOKE TEST: Expected three interactive supply crates, got %d" % loot_crates.size())
+		quit(1)
+		return
 
 	var missing_meshes: Array[String] = []
 	var mesh_nodes := main_scene.find_children("*", "MeshInstance3D", true, false)
@@ -431,6 +436,21 @@ func _run_smoke_test() -> void:
 		return
 	network_session.queue_free()
 	network_session.queue_free()
+
+	var crate_for_test: Node3D = main_scene.get_node_or_null("LootCrate_01") as Node3D
+	if crate_for_test == null:
+		push_error("SMOKE TEST: Loot crate was missing before interaction")
+		quit(1)
+		return
+	player.global_position = crate_for_test.global_position
+	if not bool(player.call("_try_open_loot_crate")) or not bool(crate_for_test.get("opened")):
+		push_error("SMOKE TEST: Nearby supply crate did not open and grant loot")
+		quit(1)
+		return
+	if bool(crate_for_test.call("open_for", player)):
+		push_error("SMOKE TEST: An already opened supply crate granted loot twice")
+		quit(1)
+		return
 
 	for elimination_index in range(6):
 		main_scene.call("_on_target_eliminated")
