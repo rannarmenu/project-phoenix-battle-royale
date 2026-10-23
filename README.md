@@ -11,6 +11,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - Six moving enemy bots that approach and attack the player.
 - Bot health, elimination counter, player damage and respawn.
 - Auto-pickup loot: ammo, medkits, armor and SMG/shotgun/sniper/pistol-specific ammo resupplies; weapon ammo pickups auto-select the matching loadout and respect reserve caps.
+- Three interactive supply crates with a loot reward table, proximity prompt, desktop E interaction and Android LOOT button; each crate can be opened once.
 - Medkit healing, armor damage reduction and inventory HUD.
 - Shrinking safe zone with a visible boundary, HUD countdown/status and outside-zone damage.
 - Mobile HUD with dynamic visual virtual joystick, aim swipe area, sprint toggle and FIRE/JUMP/RELOAD/HEAL/CAMERA buttons.
@@ -26,7 +27,8 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - **Left mouse / FIRE:** shoot
 - **R / RELOAD:** reload
 - **V / CAMERA:** toggle first-person and third-person
-- **Android touch:** drag the left side to move with a visible joystick, drag the right side to aim; use SPRINT to toggle sprint and the on-screen buttons for actions
+- **Android touch:** drag the left side to move with a visible joystick, drag the right side to aim; use SPRINT to toggle sprint and the on-screen buttons for actions; approach a supply crate and press LOOT.
+- **Supply crates:** approach a crate and press E on desktop or LOOT on mobile.
 - **Online prototype:** open `ONLINE +`, choose HOST on one device, then enter that host's reachable LAN/public IP and the same UDP port on another device and choose JOIN. `127.0.0.1` only points to the same device.
 
 ## Open the project
@@ -42,10 +44,10 @@ This is **not yet a finished Free Fire-like game**. The smoke test does not veri
 ## Not implemented yet
 - A complete playable online battle: the current online prototype replicates remote player avatars/positions only. Player movement, bot AI, shooting, damage, loot, zone state and match results are not yet authoritative/shared across clients.
 - Lobby matchmaking, player accounts, reconnect flow, dedicated server hosting and real two-device/network-condition testing.
-- Large battle-royale map, parachute drop, loot crates and full multi-slot inventory.
+- A large battle-royale map, parachute drop, weapon models/drops, multi-slot inventory, advanced enemy navigation and production-ready animation/audio.
 - Advanced enemy pathfinding / cover-seeking.
 - Production-quality character models, animations, weapon assets and audio.
-- Android export preset, signed APK/AAB build and physical-device testing.
+- Signed release APK/AAB and physical-device testing. An automated **debug APK** workflow is available under GitHub Actions; a debug build is not a store-ready release.
 
 ## Next development steps
 1. Implement shared, server-authoritative movement, combat, bots, inventory, safe zone and match outcomes; test with two real clients.
