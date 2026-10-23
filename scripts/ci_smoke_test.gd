@@ -21,6 +21,25 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var match_hud: Node = main_scene.get_node_or_null("GameHUD")
+	if match_hud == null:
+		push_error("SMOKE TEST: Match HUD layer was not created")
+		quit(1)
+		return
+	var match_status: Label = match_hud.get_node_or_null("Label") as Label
+	if match_status == null:
+		push_error("SMOKE TEST: Match status label was not created")
+		quit(1)
+		return
+	if not match_status.text.contains("TIME: 05:00") or not match_status.text.contains("LIVES: 3"):
+		push_error("SMOKE TEST: Match countdown/lives HUD was incorrect: %s" % match_status.text)
+		quit(1)
+		return
+	if main_scene.get("match_state") != &"IN_PROGRESS":
+		push_error("SMOKE TEST: Match did not start in IN_PROGRESS state")
+		quit(1)
+		return
+
 	if not player.has_method("toggle_camera_mode"):
 		push_error("SMOKE TEST: Player camera toggle method is missing")
 		quit(1)
@@ -278,5 +297,16 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick, sprint toggle, five weapon profiles/ammo persistence, recoil, muzzle flash and hit marker validated")
+	for elimination_index in range(6):
+		main_scene.call("_on_target_eliminated")
+	if main_scene.get("match_state") != &"VICTORY":
+		push_error("SMOKE TEST: Eliminating all targets did not complete the match")
+		quit(1)
+		return
+	if main_scene.get_node_or_null("MatchResultLayer/MatchResultPanel") == null:
+		push_error("SMOKE TEST: Victory result screen was not created")
+		quit(1)
+		return
+
+	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick, sprint toggle, five weapon profiles/ammo persistence, recoil, muzzle flash, hit marker, match HUD and victory flow validated")
 	quit(0)
