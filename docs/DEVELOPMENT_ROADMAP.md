@@ -6,11 +6,13 @@
 - [x] First-person / third-person camera toggle
 - [x] Hitscan shooting, ammo/reload HUD and destructible targets
 - [x] On-screen action buttons and initial Android touch movement/aim
-- [x] Add automated Godot headless smoke test for arena, camera, targets and combat
-- [ ] Test touch behavior and camera collision on a real Android device
+- [x] Add automated Godot 4.7.2 regression tests for arena, camera, bots, combat, loot, inventory, zone damage and control helpers
+- [ ] Test touch behavior, visual joystick and camera collision on a real Android device
 
 ## Stage 2 — Shooter feel
-- [ ] Proper visual virtual joystick and smoother touch controls
+- [x] Dynamic visual virtual joystick with clamped movement direction (headless-tested)
+- [x] Mobile sprint toggle and action buttons isolated from aim-touch area
+- [ ] Verify joystick rendering, aim feel and button layout on a real Android device
 - [ ] Weapon recoil, muzzle flash, reload animation, hit markers and sound
 - [x] Moving enemy AI, player damage and respawn
 - [ ] Advanced enemy cover behavior / pathfinding
