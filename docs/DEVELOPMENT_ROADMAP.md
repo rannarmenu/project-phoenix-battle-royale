@@ -21,6 +21,7 @@
 - [x] Basic raycast obstacle-aware enemy steering with side-route selection
 - [ ] Navigation-mesh pathfinding and tactical cover-seeking behavior
 - [x] Stylized tactical player/enemy silhouettes and live tactical mini-map with safe-zone/enemy/loot markers
+- [x] Procedural walk-cycle, body bob and weapon sway for the multi-part player model
 - [ ] Rigged character animation, original high-quality weapon assets, material textures and advanced UI polish
 - [x] Pause/resume/restart menu, live aim sensitivity slider and graphics quality presets
 

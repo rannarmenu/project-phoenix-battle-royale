@@ -88,6 +88,8 @@ func _run_smoke_test() -> void:
 	var player_visual: Node3D = main_scene.find_child("PhoenixPlayerVisual", true, false) as Node3D
 	var third_person_weapon: Node3D = main_scene.find_child("ThirdPersonWeapon", true, false) as Node3D
 	var bot_armor: Node3D = main_scene.find_child("BotArmor", true, false) as Node3D
+	var left_leg_visual: Node3D = player.get("left_leg_visual") as Node3D
+	var right_leg_visual: Node3D = player.get("right_leg_visual") as Node3D
 	if minimap == null or minimap.get_script() == null or combat_stats == null:
 		push_error("SMOKE TEST: Tactical minimap or alive/elimination HUD was not created")
 		quit(1)
@@ -100,6 +102,18 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Enemy tactical armor/helmet model was not created")
 		quit(1)
 		return
+	if left_leg_visual == null or right_leg_visual == null or not player.has_method("_update_character_animation"):
+		push_error("SMOKE TEST: Character procedural gait references were not initialized")
+		quit(1)
+		return
+	player.set("velocity", Vector3(5.5, 0.0, 0.0))
+	player.call("_update_character_animation", 0.016)
+	if not is_instance_valid(left_leg_visual) or not is_instance_valid(right_leg_visual):
+		push_error("SMOKE TEST: Procedural gait update did not retain the leg visuals")
+		quit(1)
+		return
+	player.set("velocity", Vector3.ZERO)
+	player.call("_update_character_animation", 0.016)
 	if not combat_stats.text.contains("ALIVE") or not combat_stats.text.contains("ELIMS"):
 		push_error("SMOKE TEST: Tactical combat stats did not show alive and eliminations")
 		quit(1)

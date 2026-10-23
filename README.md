@@ -4,7 +4,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 
 ## Implemented in the current prototype
 - Procedurally generated training arena with cover blocks, pine trees, outdoor sky lighting and three walkable POIs (North Warehouse, East Outpost, South Depot) with roof geometry, facade windows and improved architectural silhouettes.
-- Stylized multi-part tactical character models with helmet, armor, backpack, gloves, boots and a third-person rifle silhouette.
+- Stylized multi-part tactical character models with helmet, armor, backpack, gloves, boots and a third-person rifle silhouette, with procedural walk-cycle, body bob and weapon sway.
 - Enemy bots with armor plates, shoulder pads, helmet and a glowing visor.
 - Combat feedback with a color-shifting health bar, short incoming-damage flash and lightweight bullet tracer.
 - Live tactical mini-map showing safe zone, players, enemy bots, loot and supply crates; alive/elimination stats.

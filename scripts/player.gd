@@ -22,6 +22,10 @@ const JOYSTICK_RADIUS := 88.0
 
 var player_visual_root: Node3D
 var third_person_weapon: Node3D
+var left_upper_arm_visual: MeshInstance3D
+var right_upper_arm_visual: MeshInstance3D
+var left_leg_visual: MeshInstance3D
+var right_leg_visual: MeshInstance3D
 var camera: Camera3D
 var camera_pivot: Node3D
 var spring_arm: SpringArm3D
@@ -138,8 +142,8 @@ func _make_player_body() -> void:
 	_add_model_box(player_visual_root, "TacticalBackpack", Vector3(0.42, 0.58, 0.23), Vector3(0.0, 1.36, 0.255), Color(0.12, 0.22, 0.19), 0.08)
 	_add_model_box(player_visual_root, "BackpackTopFlap", Vector3(0.34, 0.13, 0.25), Vector3(0.0, 1.64, 0.25), Color(0.21, 0.31, 0.24), 0.05)
 
-	_add_model_capsule(player_visual_root, "LeftUpperArm", 0.145, 0.66, Vector3(-0.47, 1.28, -0.015), Color(0.12, 0.29, 0.24), Vector3(0.0, 0.0, -12.0))
-	_add_model_capsule(player_visual_root, "RightUpperArm", 0.145, 0.66, Vector3(0.47, 1.28, -0.015), Color(0.12, 0.29, 0.24), Vector3(0.0, 0.0, 12.0))
+	left_upper_arm_visual = _add_model_capsule(player_visual_root, "LeftUpperArm", 0.145, 0.66, Vector3(-0.47, 1.28, -0.015), Color(0.12, 0.29, 0.24), Vector3(0.0, 0.0, -12.0))
+	right_upper_arm_visual = _add_model_capsule(player_visual_root, "RightUpperArm", 0.145, 0.66, Vector3(0.47, 1.28, -0.015), Color(0.12, 0.29, 0.24), Vector3(0.0, 0.0, 12.0))
 	_add_model_capsule(player_visual_root, "LeftForearm", 0.12, 0.43, Vector3(-0.53, 0.91, -0.09), Color(0.23, 0.29, 0.22), Vector3(0.0, 0.0, -9.0))
 	_add_model_capsule(player_visual_root, "RightForearm", 0.12, 0.43, Vector3(0.53, 0.91, -0.09), Color(0.23, 0.29, 0.22), Vector3(0.0, 0.0, 9.0))
 	_add_model_capsule(player_visual_root, "LeftGlove", 0.105, 0.20, Vector3(-0.55, 0.63, -0.1), Color(0.07, 0.09, 0.08))
@@ -148,8 +152,8 @@ func _make_player_body() -> void:
 	_add_model_sphere(player_visual_root, "LeftShoulderPad", Vector3(0.24, 0.19, 0.25), Vector3(-0.44, 1.55, -0.025), Color(0.22, 0.34, 0.27))
 	_add_model_sphere(player_visual_root, "RightShoulderPad", Vector3(0.24, 0.19, 0.25), Vector3(0.44, 1.55, -0.025), Color(0.22, 0.34, 0.27))
 
-	_add_model_capsule(player_visual_root, "LeftLeg", 0.16, 0.77, Vector3(-0.19, 0.47, 0.025), Color(0.19, 0.23, 0.19))
-	_add_model_capsule(player_visual_root, "RightLeg", 0.16, 0.77, Vector3(0.19, 0.47, 0.025), Color(0.19, 0.23, 0.19))
+	left_leg_visual = _add_model_capsule(player_visual_root, "LeftLeg", 0.16, 0.77, Vector3(-0.19, 0.47, 0.025), Color(0.19, 0.23, 0.19))
+	right_leg_visual = _add_model_capsule(player_visual_root, "RightLeg", 0.16, 0.77, Vector3(0.19, 0.47, 0.025), Color(0.19, 0.23, 0.19))
 	_add_model_box(player_visual_root, "LeftCombatBoot", Vector3(0.25, 0.16, 0.40), Vector3(-0.2, 0.105, -0.055), Color(0.07, 0.085, 0.075), 0.12)
 	_add_model_box(player_visual_root, "RightCombatBoot", Vector3(0.25, 0.16, 0.40), Vector3(0.2, 0.105, -0.055), Color(0.07, 0.085, 0.075), 0.12)
 
@@ -490,6 +494,27 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("jump"):
 		_request_jump()
 	move_and_slide()
+	_update_character_animation(delta)
+
+func _update_character_animation(_delta: float) -> void:
+	if not is_instance_valid(player_visual_root):
+		return
+	var planar_speed := Vector2(velocity.x, velocity.z).length()
+	var gait_weight := clampf(planar_speed / SPRINT_SPEED, 0.0, 1.0)
+	var phase := float(Time.get_ticks_msec()) * 0.001 * (5.8 + gait_weight * 3.8)
+	var stride := sin(phase) * gait_weight
+	player_visual_root.position.y = sin(phase * 2.0) * 0.003 + absf(sin(phase)) * 0.026 * gait_weight
+	if is_instance_valid(left_leg_visual):
+		left_leg_visual.rotation.x = stride * 0.42
+	if is_instance_valid(right_leg_visual):
+		right_leg_visual.rotation.x = -stride * 0.42
+	if is_instance_valid(left_upper_arm_visual):
+		left_upper_arm_visual.rotation.x = -stride * 0.13
+	if is_instance_valid(right_upper_arm_visual):
+		right_upper_arm_visual.rotation.x = stride * 0.13
+	if is_instance_valid(third_person_weapon):
+		third_person_weapon.position.y = 1.24 + sin(phase * 2.0) * 0.012 * gait_weight
+		third_person_weapon.rotation_degrees.x = -3.0 + stride * 1.2
 
 func toggle_camera_mode() -> void:
 	first_person = not first_person
