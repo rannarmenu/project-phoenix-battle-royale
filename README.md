@@ -1,38 +1,48 @@
 # Project Phoenix
 
-A Godot 4 mobile-first 3D shooter prototype with a camera toggle for both third-person and first-person play.
+A Godot 4 mobile-first 3D shooter prototype with both third-person and first-person camera modes.
 
 ## Implemented in the current prototype
-- Procedurally generated training arena, ground, cover blocks and basic lighting.
-- Basic player capsule and prototype rifle positioned for first-person view.
-- First-person / third-person camera toggle with a collision-aware spring arm (V on desktop or CAMERA button).
-- WASD movement, mouse/touch look, jump and sprint on desktop.
-- Hitscan shooting, moving enemy bots that approach and attack, bot health, target elimination counter, player damage and respawn.
-- Basic ammo/reload HUD and on-screen FIRE, JUMP, RELOAD and CAMERA buttons.
-- Godot Compatibility renderer as a performance-conscious starting point.
+- Procedurally generated training arena with cover blocks, low-poly pine trees and outdoor sky lighting.
+- Player capsule and simple prototype rifle.
+- First-person / third-person camera toggle with a collision-aware spring arm.
+- WASD movement, mouse/touch look, jump and desktop sprint.
+- Hitscan shooting, ammo/reload HUD and crosshair.
+- Six moving enemy bots that approach and attack the player.
+- Bot health, elimination counter, player damage and respawn.
+- Touch action buttons for FIRE, JUMP, RELOAD and CAMERA.
+- Compatibility renderer as a performance-conscious starting point.
 
 ## Controls
 - **WASD:** move
-- **Mouse:** aim (desktop)
+- **Mouse:** aim
 - **Space:** jump
 - **Shift:** sprint (desktop)
 - **Left mouse / FIRE:** shoot
 - **R / RELOAD:** reload
 - **V / CAMERA:** toggle first-person and third-person
-- **Android touch:** drag left side to move, drag right side to aim; use the on-screen buttons for actions
+- **Android touch:** drag the left side to move and the right side to aim; use on-screen buttons for actions
 
 ## Open the project
 1. Install Godot 4.7.2 stable (the CI-tested version).
 2. Import this repository folder as a Godot project.
 3. Open `scenes/main.tscn` and run the project.
 
+## Automated validation
+GitHub Actions passes a Godot 4.7.2 headless import and gameplay smoke test covering scene creation, player spawn, both camera modes, six bots, mesh references, bot damage/elimination, player respawn and enemy attack.
+
+This is **not yet a finished Free Fire-like game**. The smoke test does not verify visual quality, real touch behavior, frame rate, thermal performance or gameplay on an Android phone.
+
 ## Not implemented yet
-This is an early local prototype, not a finished Free Fire-like game. It has no online multiplayer, lobby, large battle-royale map, parachute drop, shrinking safe zone, loot/inventory, moving enemy AI, production-quality character models/animations, or Android APK build/signing pipeline. The updated scripts have not yet been verified in the Godot editor or on a physical Android device, so additional fixes may be needed.
+- Online multiplayer, lobby, matchmaking or player accounts.
+- Large battle-royale map, parachute drop, shrinking safe zone, loot and inventory.
+- Advanced enemy pathfinding / cover-seeking.
+- Production-quality character models, animations, weapon assets and audio.
+- Android export preset, signed APK/AAB build and physical-device testing.
 
 ## Next development steps
-1. Validate the project in Godot and fix parser/runtime issues.
-2. Improve camera collision, virtual joystick, aiming and responsive mobile HUD.
-3. Add weapon feedback, moving bots, audio and original art assets.
-4. Implement the battle-royale match loop and loot.
-5. Build and test server-authoritative multiplayer.
-6. Profile on Android devices and create a signed Android release.
+1. Add a visual virtual joystick and refine responsive mobile HUD.
+2. Add weapon feedback, moving character animations, sound and hit effects.
+3. Implement the battle-royale match loop, safe zone and loot.
+4. Build and test server-authoritative online multiplayer.
+5. Configure Android export, profile on target phones and create a signed release.
