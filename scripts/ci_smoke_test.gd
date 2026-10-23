@@ -87,5 +87,14 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, player, camera toggle, targets and mesh references, combat damage and respawn validated")
+	var attacker: Node = targets[1]
+	attacker.set("global_position", player.global_position + Vector3(0.0, 0.0, -6.0))
+	attacker.set("attack_cooldown", 0.05)
+	await create_timer(0.35).timeout
+	if int(player.get("health")) >= 100:
+		push_error("SMOKE TEST: Nearby enemy bot did not damage the player")
+		quit(1)
+		return
+
+	print("PHOENIX_SMOKE_TEST_OK: arena, player, camera toggle, targets and mesh references, combat damage, enemy attack and respawn validated")
 	quit(0)
