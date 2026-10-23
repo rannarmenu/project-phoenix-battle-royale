@@ -177,8 +177,8 @@ func _run_smoke_test() -> void:
 		return
 
 	var loot_nodes: Array[Node] = main_scene.find_children("Loot_*", "Area3D", true, false)
-	if loot_nodes.size() != 8:
-		push_error("SMOKE TEST: Expected 8 loot pickups, got %d" % loot_nodes.size())
+	if loot_nodes.size() != 12:
+		push_error("SMOKE TEST: Expected 12 loot pickups, got %d" % loot_nodes.size())
 		quit(1)
 		return
 
@@ -268,6 +268,13 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 	player.call("switch_weapon", 0)
+
+	var smg_ammo_pickup: Node = main_scene.get_node("Loot_09")
+	smg_ammo_pickup.call("collect", player)
+	if player.call("get_current_weapon_name") != "SMG" or int(player.get("ammo")) != 7 or int(player.get("reserve_ammo")) != 115:
+		push_error("SMOKE TEST: SMG ammo pickup did not top up and select the SMG loadout")
+		quit(1)
+		return
 
 	player.set("health", 45)
 	player.set("medkits", 0)
