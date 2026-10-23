@@ -148,32 +148,31 @@ func _build_hud() -> void:
 		joystick_overlay.name = "VirtualJoystickOverlay"
 		layer.add_child(joystick_overlay)
 
-	var camera_button := _make_button("CAMERA", Vector2(-154, 22), Vector2(130, 44))
-	camera_button.pressed.connect(toggle_camera_mode)
-	layer.add_child(camera_button)
+		var camera_button := _make_button("CAMERA", Vector2(-154, 22), Vector2(130, 44))
+		camera_button.pressed.connect(toggle_camera_mode)
+		layer.add_child(camera_button)
 
-	var fire_button := _make_button("FIRE", Vector2(-154, 76), Vector2(130, 60))
-	fire_button.add_theme_font_size_override("font_size", 22)
-	fire_button.pressed.connect(_shoot)
-	layer.add_child(fire_button)
+		var fire_button := _make_button("FIRE", Vector2(-154, 76), Vector2(130, 60))
+		fire_button.add_theme_font_size_override("font_size", 22)
+		fire_button.pressed.connect(_shoot)
+		layer.add_child(fire_button)
 
-	var jump_button := _make_button("JUMP", Vector2(-154, 146), Vector2(130, 46))
-	jump_button.pressed.connect(_request_jump)
-	layer.add_child(jump_button)
+		var jump_button := _make_button("JUMP", Vector2(-154, 146), Vector2(130, 46))
+		jump_button.pressed.connect(_request_jump)
+		layer.add_child(jump_button)
 
-	var reload_button := _make_button("RELOAD", Vector2(-154, 202), Vector2(130, 44))
-	reload_button.pressed.connect(_reload)
-	layer.add_child(reload_button)
+		var reload_button := _make_button("RELOAD", Vector2(-154, 202), Vector2(130, 44))
+		reload_button.pressed.connect(_reload)
+		layer.add_child(reload_button)
 
-	var heal_button := _make_button("HEAL", Vector2(-154, 258), Vector2(130, 44))
-	heal_button.pressed.connect(use_medkit)
-	layer.add_child(heal_button)
+		var heal_button := _make_button("HEAL", Vector2(-154, 258), Vector2(130, 44))
+		heal_button.pressed.connect(use_medkit)
+		layer.add_child(heal_button)
 
-	mobile_sprint_button = _make_button("SPRINT: OFF", Vector2(-154, 314), Vector2(130, 44))
-	mobile_sprint_button.pressed.connect(_toggle_mobile_sprint)
-	layer.add_child(mobile_sprint_button)
+		mobile_sprint_button = _make_button("SPRINT: OFF", Vector2(-154, 314), Vector2(130, 44))
+		mobile_sprint_button.pressed.connect(_toggle_mobile_sprint)
+		layer.add_child(mobile_sprint_button)
 
-	if is_mobile:
 		var hint := Label.new()
 		hint.text = "LEFT: MOVE   •   RIGHT: AIM"
 		hint.anchor_left = 0.5
