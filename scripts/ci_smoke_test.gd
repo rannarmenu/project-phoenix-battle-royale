@@ -100,21 +100,48 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Ammo pickup did not update inventory")
 		quit(1)
 		return
+	if not bool(player.call("add_loot", &"ammo", 500)):
+		push_error("SMOKE TEST: Ammo inventory rejected valid capacity")
+		quit(1)
+		return
+	if int(player.get("reserve_ammo")) != 240:
+		push_error("SMOKE TEST: Ammo inventory did not enforce its 240 cap")
+		quit(1)
+		return
+	if bool(player.call("add_loot", &"ammo", 1)):
+		push_error("SMOKE TEST: Ammo inventory accepted ammo above cap")
+		quit(1)
+		return
+	player.set("ammo", 10)
+	player.set("reserve_ammo", 40)
+	player.call("_reload")
+	if int(player.get("ammo")) != 30 or int(player.get("reserve_ammo")) != 20:
+		push_error("SMOKE TEST: Reload did not transfer ammo correctly")
+		quit(1)
+		return
 
 	player.set("health", 45)
-	player.set("medkits", 1)
+	player.set("medkits", 0)
+	var medkit_pickup: Node = main_scene.get_node("Loot_02")
+	medkit_pickup.call("collect", player)
+	if int(player.get("medkits")) != 1:
+		push_error("SMOKE TEST: Medkit pickup did not update inventory")
+		quit(1)
+		return
 	player.call("use_medkit")
 	if int(player.get("health")) != 90 or int(player.get("medkits")) != 0:
 		push_error("SMOKE TEST: Medkit did not restore health or consume inventory")
 		quit(1)
 		return
 
-	if not bool(player.call("add_loot", &"armor", 40)):
-		push_error("SMOKE TEST: Armor pickup was not accepted")
+	var armor_pickup: Node = main_scene.get_node("Loot_03")
+	armor_pickup.call("collect", player)
+	if int(player.get("armor")) != 35:
+		push_error("SMOKE TEST: Armor pickup did not update inventory")
 		quit(1)
 		return
 	player.call("take_damage", 20)
-	if int(player.get("health")) != 82 or int(player.get("armor")) != 28:
+	if int(player.get("health")) != 82 or int(player.get("armor")) != 23:
 		push_error("SMOKE TEST: Armor damage reduction was incorrect")
 		quit(1)
 		return
@@ -141,5 +168,14 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, cameras, bots, loot pickup, ammo inventory, medkit healing, armor, respawn, enemy attack and safe-zone shrink validated")
+	player.set("global_position", Vector3(20.0, 0.05, 0.0))
+	player.set("health", 100)
+	player.set("armor", 0)
+	zone.call("apply_zone_damage_to", player)
+	if int(player.get("health")) != 95:
+		push_error("SMOKE TEST: Outside-zone damage was not applied")
+		quit(1)
+		return
+
+	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, mesh references, ammo pickup/caps/reload, medkit, armor damage reduction, respawn, enemy attack, zone boundaries/shrink/damage validated")
 	quit(0)
