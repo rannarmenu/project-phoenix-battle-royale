@@ -192,10 +192,10 @@ func _spawn_loot() -> void:
 	]
 	var amounts: Array[int] = [45, 1, 35, 30, 40, 1, 60, 1]
 	for index in range(positions.size()):
-		var pickup: Area3D = LootScript.new()
+		var pickup: Node3D = LootScript.new()
 		pickup.name = "Loot_%02d" % (index + 1)
-		pickup.item_type = item_types[index]
-		pickup.amount = amounts[index]
+		pickup.set("item_type", item_types[index])
+		pickup.set("amount", amounts[index])
 		pickup.position = positions[index]
 		add_child(pickup)
 
@@ -267,5 +267,10 @@ func _on_target_eliminated() -> void:
 	_update_hud()
 
 func _update_hud() -> void:
-	if is_instance_valid(status_label):
-		status_label.text = "TRAINING RANGE\nTARGETS: %d / %d" % [eliminated_count, total_targets]
+	if not is_instance_valid(status_label):
+		return
+	var zone_text := "SAFE ZONE: --"
+	var player := get_node_or_null("Player") as Node3D
+	if is_instance_valid(safe_zone) and is_instance_valid(player):
+		zone_text = safe_zone.call("get_status_text_for_position", player.global_position)
+	status_label.text = "TARGETS: %d / %d\\n%s" % [eliminated_count, total_targets, zone_text]
