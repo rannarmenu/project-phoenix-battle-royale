@@ -2,6 +2,8 @@ extends CharacterBody3D
 
 signal camera_mode_changed(first_person: bool)
 
+const VirtualJoystickScript = preload("res://scripts/virtual_joystick.gd")
+
 const MOVE_SPEED := 6.5
 const SPRINT_SPEED := 8.5
 const JUMP_SPEED := 7.0
@@ -29,6 +31,9 @@ var armor := 0
 var health := 100
 var spawn_position := Vector3.ZERO
 var hud_label: Label
+var joystick_overlay: Control
+var mobile_sprint_button: Button
+var mobile_sprint_active: bool = false
 
 func _ready() -> void:
 	is_mobile = OS.has_feature("android") or OS.has_feature("ios")
@@ -138,6 +143,11 @@ func _build_hud() -> void:
 	layer.add_child(hud_label)
 	_update_hud()
 
+	if is_mobile:
+		joystick_overlay = VirtualJoystickScript.new() as Control
+		joystick_overlay.name = "VirtualJoystickOverlay"
+		layer.add_child(joystick_overlay)
+
 	var camera_button := _make_button("CAMERA", Vector2(-154, 22), Vector2(130, 44))
 	camera_button.pressed.connect(toggle_camera_mode)
 	layer.add_child(camera_button)
@@ -158,6 +168,10 @@ func _build_hud() -> void:
 	var heal_button := _make_button("HEAL", Vector2(-154, 258), Vector2(130, 44))
 	heal_button.pressed.connect(use_medkit)
 	layer.add_child(heal_button)
+
+	mobile_sprint_button = _make_button("SPRINT: OFF", Vector2(-154, 314), Vector2(130, 44))
+	mobile_sprint_button.pressed.connect(_toggle_mobile_sprint)
+	layer.add_child(mobile_sprint_button)
 
 	if is_mobile:
 		var hint := Label.new()
@@ -216,14 +230,18 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 			touch_move_index = event.index
 			touch_move_origin = event.position
 			touch_move_vector = Vector2.ZERO
+			if is_instance_valid(joystick_overlay):
+				joystick_overlay.call("begin_drag", event.position)
 		else:
-			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 322.0
+			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 378.0
 			if not touching_action_buttons and event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.82 and touch_look_index == -1:
 				touch_look_index = event.index
 	else:
 		if event.index == touch_move_index:
 			touch_move_index = -1
 			touch_move_vector = Vector2.ZERO
+			if is_instance_valid(joystick_overlay):
+				joystick_overlay.call("end_drag")
 		if event.index == touch_look_index:
 			touch_look_index = -1
 
@@ -231,6 +249,8 @@ func _handle_screen_drag(event: InputEventScreenDrag) -> void:
 	if event.index == touch_move_index:
 		var drag_vector: Vector2 = (event.position - touch_move_origin) / JOYSTICK_RADIUS
 		touch_move_vector = Vector2(drag_vector.x, -drag_vector.y).limit_length(1.0)
+		if is_instance_valid(joystick_overlay):
+			joystick_overlay.call("update_drag", event.position)
 	elif event.index == touch_look_index:
 		_apply_look(event.relative, TOUCH_LOOK_SENSITIVITY)
 
@@ -250,7 +270,8 @@ func _physics_process(delta: float) -> void:
 	if move_input.length() > 1.0:
 		move_input = move_input.normalized()
 	var direction := (global_transform.basis * Vector3(move_input.x, 0.0, move_input.y)).normalized()
-	var speed := SPRINT_SPEED if Input.is_key_pressed(KEY_SHIFT) and not is_mobile else MOVE_SPEED
+	var sprinting := (Input.is_key_pressed(KEY_SHIFT) and not is_mobile) or (is_mobile and mobile_sprint_active)
+	var speed := SPRINT_SPEED if sprinting else MOVE_SPEED
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	if Input.is_action_just_pressed("jump"):
@@ -272,6 +293,11 @@ func _update_camera_mode() -> void:
 	for node in get_children():
 		if node is MeshInstance3D and node.name in ["PhoenixPlayerBody", "PhoenixPlayerHead"]:
 			node.visible = not first_person
+
+func _toggle_mobile_sprint() -> void:
+	mobile_sprint_active = not mobile_sprint_active
+	if is_instance_valid(mobile_sprint_button):
+		mobile_sprint_button.text = "SPRINT: ON" if mobile_sprint_active else "SPRINT: OFF"
 
 func _shoot() -> void:
 	if not can_fire or not is_instance_valid(camera) or ammo <= 0:
