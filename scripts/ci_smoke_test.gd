@@ -351,7 +351,22 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Invalid join address was not rejected")
 		quit(1)
 		return
+	if int(network_session.call("host_game", 24681, 4)) != OK:
+		push_error("SMOKE TEST: ENet host could not start on a valid local port")
+		quit(1)
+		return
+	session_status = network_session.call("get_status_snapshot")
+	if session_status.get("role") != &"SERVER" or not bool(session_status.get("is_server")) or not bool(session_status.get("is_online")):
+		push_error("SMOKE TEST: ENet host did not enter server state")
+		quit(1)
+		return
 	network_session.call("leave_game")
+	session_status = network_session.call("get_status_snapshot")
+	if session_status.get("role") != &"OFFLINE" or bool(session_status.get("is_online")):
+		push_error("SMOKE TEST: ENet session did not return cleanly to offline state")
+		quit(1)
+		return
+	network_session.queue_free()
 	network_session.queue_free()
 
 	for elimination_index in range(6):
