@@ -115,7 +115,7 @@ func _add_pine_tree(pos: Vector3, tree_scale: float) -> void:
 	]
 	for tier in range(3):
 		var foliage := MeshInstance3D.new()
-		var cone := ConeMesh.new()
+		var cone := CylinderMesh.new()
 		cone.top_radius = 0.035 * tree_scale
 		cone.bottom_radius = (1.05 - float(tier) * 0.17) * tree_scale
 		cone.height = (1.65 - float(tier) * 0.12) * tree_scale
