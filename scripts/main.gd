@@ -15,6 +15,11 @@ var match_elapsed: float = 0.0
 var match_duration: float = 300.0
 var match_state: StringName = &"IN_PROGRESS"
 var match_overlay: PanelContainer
+var sun_light: DirectionalLight3D
+var world_environment: WorldEnvironment
+var quality_button: Button
+var graphics_quality_index: int = 1
+const GRAPHICS_QUALITY_NAMES: Array[String] = ["LOW", "BALANCED", "HIGH"]
 
 func _ready() -> void:
 	_build_environment()
@@ -24,6 +29,7 @@ func _ready() -> void:
 	_spawn_targets()
 	_spawn_loot()
 	_build_hud()
+	_set_graphics_quality(graphics_quality_index)
 	_update_hud()
 
 func _process(delta: float) -> void:
@@ -38,8 +44,22 @@ func _process(delta: float) -> void:
 		hud_refresh_timer = 0.0
 		_update_hud()
 
+func _cycle_graphics_quality() -> void:
+	_set_graphics_quality((graphics_quality_index + 1) % GRAPHICS_QUALITY_NAMES.size())
+
+func _set_graphics_quality(quality_index: int) -> void:
+	graphics_quality_index = clampi(quality_index, 0, GRAPHICS_QUALITY_NAMES.size() - 1)
+	var quality_name: String = GRAPHICS_QUALITY_NAMES[graphics_quality_index]
+	if is_instance_valid(quality_button):
+		quality_button.text = "QUALITY: " + quality_name
+	if is_instance_valid(sun_light):
+		sun_light.shadow_enabled = quality_name != "LOW"
+		sun_light.light_energy = 1.1 if quality_name == "LOW" else (1.4 if quality_name == "HIGH" else 1.25)
+	if is_instance_valid(world_environment) and is_instance_valid(world_environment.environment):
+		world_environment.environment.ambient_light_energy = 0.55 if quality_name == "LOW" else (0.78 if quality_name == "HIGH" else 0.65)
+
 func _build_environment() -> void:
-	var world_env := WorldEnvironment.new()
+	world_environment = WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
@@ -52,15 +72,15 @@ func _build_environment() -> void:
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_energy = 0.65
-	world_env.environment = env
-	add_child(world_env)
+	world_environment.environment = env
+	add_child(world_environment)
 
-	var sun := DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-48.0, -28.0, 0.0)
-	sun.light_energy = 1.35
-	sun.shadow_enabled = true
-	add_child(sun)
+	sun_light = DirectionalLight3D.new()
+	sun_light.name = "Sun"
+	sun_light.rotation_degrees = Vector3(-48.0, -28.0, 0.0)
+	sun_light.light_energy = 1.35
+	sun_light.shadow_enabled = true
+	add_child(sun_light)
 
 func _build_arena() -> void:
 	var floor_body := StaticBody3D.new()
@@ -265,6 +285,18 @@ func _build_hud() -> void:
 	title.add_theme_font_size_override("font_size", 18)
 	title.add_theme_color_override("font_color", Color(0.87, 0.78, 0.48))
 	layer.add_child(title)
+
+	quality_button = Button.new()
+	quality_button.name = "GraphicsQualityButton"
+	quality_button.text = "QUALITY: BALANCED"
+	quality_button.anchor_left = 0.5
+	quality_button.anchor_right = 0.5
+	quality_button.offset_left = -92.0
+	quality_button.offset_right = 92.0
+	quality_button.offset_top = 58.0
+	quality_button.offset_bottom = 94.0
+	quality_button.pressed.connect(_cycle_graphics_quality)
+	layer.add_child(quality_button)
 
 	var crosshair := Label.new()
 	crosshair.text = "+"
