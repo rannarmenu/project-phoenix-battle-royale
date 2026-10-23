@@ -6,6 +6,7 @@ const LootScript = preload("res://scripts/loot_pickup.gd")
 const SafeZoneScript = preload("res://scripts/safe_zone.gd")
 
 var status_label: Label
+var kill_feed_label: Label
 var eliminated_count: int = 0
 var total_targets: int = 0
 var safe_zone: Node3D
@@ -244,6 +245,13 @@ func _build_hud() -> void:
 	status_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.9))
 	layer.add_child(status_label)
 
+	kill_feed_label = Label.new()
+	kill_feed_label.name = "KillFeed"
+	kill_feed_label.position = Vector2(24.0, 110.0)
+	kill_feed_label.add_theme_font_size_override("font_size", 14)
+	kill_feed_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.52))
+	layer.add_child(kill_feed_label)
+
 	var title := Label.new()
 	title.text = "PHOENIX  /  BATTLE SIM"
 	title.anchor_left = 0.5
@@ -277,6 +285,8 @@ func _on_target_eliminated() -> void:
 	if match_state != &"IN_PROGRESS":
 		return
 	eliminated_count = mini(total_targets, eliminated_count + 1)
+	if is_instance_valid(kill_feed_label):
+		kill_feed_label.text = "ELIMINATION  +%d" % eliminated_count
 	_update_hud()
 	if eliminated_count >= total_targets:
 		_finish_match(&"VICTORY")
@@ -344,4 +354,9 @@ func _update_hud() -> void:
 	var player := get_node_or_null("Player") as Node3D
 	if is_instance_valid(safe_zone) and is_instance_valid(player):
 		zone_text = safe_zone.call("get_status_text_for_position", player.global_position)
-	status_label.text = "TARGETS: %d / %d\n%s" % [eliminated_count, total_targets, zone_text]
+	var player_lives: int = int(player.get("lives_remaining")) if is_instance_valid(player) else 0
+	var time_left: int = maxi(0, int(ceil(match_duration - match_elapsed)))
+	var clock_text := "%02d:%02d" % [int(time_left / 60), time_left % 60]
+	status_label.text = "PHOENIX  |  %s\nTARGETS: %d / %d   LIVES: %d   TIME: %s\n%s" % [
+		str(match_state), eliminated_count, total_targets, player_lives, clock_text, zone_text
+	]
