@@ -24,6 +24,8 @@ var first_person := false
 var is_mobile := false
 var ammo := 30
 var reserve_ammo := 120
+var medkits := 1
+var armor := 0
 var health := 100
 var spawn_position := Vector3.ZERO
 var hud_label: Label
@@ -150,6 +152,10 @@ func _build_hud() -> void:
 	reload_button.pressed.connect(_reload)
 	layer.add_child(reload_button)
 
+	var heal_button := _make_button("HEAL", Vector2(-154, 258), Vector2(130, 44))
+	heal_button.pressed.connect(use_medkit)
+	layer.add_child(heal_button)
+
 	if is_mobile:
 		var hint := Label.new()
 		hint.text = "LEFT: MOVE   •   RIGHT: AIM"
@@ -193,6 +199,8 @@ func _input(event: InputEvent) -> void:
 			toggle_camera_mode()
 		elif event.keycode == KEY_R:
 			_reload()
+		elif event.keycode == KEY_H:
+			use_medkit()
 	elif event is InputEventScreenTouch and is_mobile:
 		_handle_screen_touch(event)
 	elif event is InputEventScreenDrag and is_mobile:
@@ -206,7 +214,7 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 			touch_move_origin = event.position
 			touch_move_vector = Vector2.ZERO
 		else:
-			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 260.0
+			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 322.0
 			if not touching_action_buttons and event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.82 and touch_look_index == -1:
 				touch_look_index = event.index
 	else:
@@ -281,10 +289,47 @@ func _shoot() -> void:
 		if is_instance_valid(collider) and collider.has_method("take_damage"):
 			collider.call("take_damage", 34.0)
 
+func add_loot(item_type: StringName, amount: int) -> bool:
+	var pickup_amount: int = maxi(1, amount)
+	match item_type:
+		&"ammo":
+			var added_ammo: int = mini(pickup_amount, 240 - reserve_ammo)
+			if added_ammo <= 0:
+				return false
+			reserve_ammo += added_ammo
+		&"medkit":
+			var added_medkits: int = mini(pickup_amount, 3 - medkits)
+			if added_medkits <= 0:
+				return false
+			medkits += added_medkits
+		&"armor":
+			var added_armor: int = mini(pickup_amount, 100 - armor)
+			if added_armor <= 0:
+				return false
+			armor += added_armor
+		_:
+			return false
+	_update_hud()
+	return true
+
+func use_medkit() -> void:
+	if medkits <= 0 or health >= 100:
+		return
+	medkits -= 1
+	health = mini(100, health + 45)
+	_update_hud()
+
 func take_damage(amount: int) -> void:
-	health = maxi(0, health - amount)
+	if amount <= 0:
+		return
+	var incoming_damage: int = amount
+	var armor_absorbed: int = mini(armor, int(ceil(float(incoming_damage) * 0.6)))
+	armor -= armor_absorbed
+	incoming_damage -= armor_absorbed
+	health = maxi(0, health - incoming_damage)
 	if health <= 0:
 		health = 100
+		armor = 0
 		global_position = spawn_position
 		velocity = Vector3.ZERO
 	_update_hud()
@@ -303,7 +348,7 @@ func _request_jump() -> void:
 
 func _update_hud() -> void:
 	if is_instance_valid(hud_label):
-		hud_label.text = "HP %d     AMMO %d / %d" % [health, ammo, reserve_ammo]
+		hud_label.text = "HP %d   ARM %d   MED %d\nAMMO %d / %d" % [health, armor, medkits, ammo, reserve_ammo]
 		var text_color := Color(0.9, 0.97, 0.9)
 		if health <= 35:
 			text_color = Color(1.0, 0.32, 0.25)
