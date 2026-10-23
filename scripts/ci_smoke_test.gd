@@ -65,25 +65,63 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	var test_target: Node = targets[0]
-	if not test_target.has_method("take_damage"):
-		push_error("SMOKE TEST: Bot damage method is missing")
+	var loot_nodes: Array[Node] = main_scene.find_children("Loot_*", "Area3D", true, false)
+	if loot_nodes.size() != 8:
+		push_error("SMOKE TEST: Expected 8 loot pickups, got %d" % loot_nodes.size())
 		quit(1)
 		return
-	test_target.call("take_damage", 34.0)
-	if int(test_target.get("health")) != 66:
-		push_error("SMOKE TEST: Bot health did not decrease after a hit")
+
+	var zone: Node = main_scene.get_node_or_null("SafeZone")
+	if zone == null or not zone.has_method("get_zone_status_for_position"):
+		push_error("SMOKE TEST: Safe zone was not created")
 		quit(1)
 		return
-	test_target.call("take_damage", 66.0)
-	if int(main_scene.get("eliminated_count")) != 1:
-		push_error("SMOKE TEST: Target elimination counter did not increment")
+	if zone.call("get_zone_status_for_position", Vector3.ZERO) != "SAFE":
+		push_error("SMOKE TEST: Safe-zone center should be safe")
+		quit(1)
+		return
+	if zone.call("get_zone_status_for_position", Vector3(50.0, 0.0, 50.0)) != "OUTSIDE ZONE":
+		push_error("SMOKE TEST: Outside-zone boundary check failed")
+		quit(1)
+		return
+	if not is_equal_approx(float(zone.call("get_current_radius")), 38.0):
+		push_error("SMOKE TEST: Safe-zone start radius is incorrect")
+		quit(1)
+		return
+
+	var ammo_before: int = int(player.get("reserve_ammo"))
+	var ammo_pickup: Node = main_scene.get_node("Loot_01")
+	if not ammo_pickup.has_method("collect"):
+		push_error("SMOKE TEST: Loot pickup collection method is missing")
+		quit(1)
+		return
+	ammo_pickup.call("collect", player)
+	if int(player.get("reserve_ammo")) != ammo_before + 45:
+		push_error("SMOKE TEST: Ammo pickup did not update inventory")
+		quit(1)
+		return
+
+	player.set("health", 45)
+	player.set("medkits", 1)
+	player.call("use_medkit")
+	if int(player.get("health")) != 90 or int(player.get("medkits")) != 0:
+		push_error("SMOKE TEST: Medkit did not restore health or consume inventory")
+		quit(1)
+		return
+
+	if not bool(player.call("add_loot", &"armor", 40)):
+		push_error("SMOKE TEST: Armor pickup was not accepted")
+		quit(1)
+		return
+	player.call("take_damage", 20)
+	if int(player.get("health")) != 82 or int(player.get("armor")) != 28:
+		push_error("SMOKE TEST: Armor damage reduction was incorrect")
 		quit(1)
 		return
 
 	player.call("take_damage", 999)
-	if int(player.get("health")) != 100:
-		push_error("SMOKE TEST: Player did not respawn at full health")
+	if int(player.get("health")) != 100 or int(player.get("armor")) != 0:
+		push_error("SMOKE TEST: Player did not respawn correctly")
 		quit(1)
 		return
 
@@ -93,6 +131,13 @@ func _run_smoke_test() -> void:
 	await create_timer(0.35).timeout
 	if int(player.get("health")) >= 100:
 		push_error("SMOKE TEST: Nearby enemy bot did not damage the player")
+		quit(1)
+		return
+
+	zone.set("elapsed_time", 999.0)
+	zone.call("_update_zone_radius")
+	if not is_equal_approx(float(zone.call("get_current_radius")), float(zone.get("final_radius"))):
+		push_error("SMOKE TEST: Safe zone did not shrink to final radius")
 		quit(1)
 		return
 
