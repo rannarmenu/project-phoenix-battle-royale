@@ -29,6 +29,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - **V / CAMERA:** toggle first-person and third-person
 - **Android touch:** drag the left side to move with a visible joystick, drag the right side to aim; use SPRINT to toggle sprint and the on-screen buttons for actions; approach a supply crate and press LOOT.
 - **Supply crates:** approach a crate and press E on desktop or LOOT on mobile.
+- **Pause / settings:** press ESC or P (or tap PAUSE), resume/restart, and adjust mouse/touch aim sensitivity in real time.
 - **Online prototype:** open `ONLINE +`, choose HOST on one device, then enter that host's reachable LAN/public IP and the same UDP port on another device and choose JOIN. `127.0.0.1` only points to the same device.
 
 ## Open the project

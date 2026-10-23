@@ -61,6 +61,34 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var pause_button: Button = main_scene.find_child("PauseButton", true, false) as Button
+	var pause_panel: PanelContainer = main_scene.find_child("PausePanel", true, false) as PanelContainer
+	var sensitivity_slider: HSlider = main_scene.find_child("AimSensitivitySlider", true, false) as HSlider
+	if pause_button == null or pause_panel == null or sensitivity_slider == null:
+		push_error("SMOKE TEST: Pause/settings controls were not created")
+		quit(1)
+		return
+	pause_button.pressed.emit()
+	if not main_scene.get_tree().paused or not pause_panel.visible:
+		push_error("SMOKE TEST: Pause button did not pause gameplay and show the settings panel")
+		quit(1)
+		return
+	sensitivity_slider.value = 0.0044
+	if not is_equal_approx(float(player.get("mouse_sensitivity")), 0.0044):
+		push_error("SMOKE TEST: Aim sensitivity slider did not update player mouse sensitivity")
+		quit(1)
+		return
+	if not is_equal_approx(float(player.get("touch_look_sensitivity")), 0.006):
+		push_error("SMOKE TEST: Aim sensitivity slider did not update touch sensitivity")
+		quit(1)
+		return
+	pause_button.pressed.emit()
+	if main_scene.get_tree().paused or pause_panel.visible:
+		push_error("SMOKE TEST: Resume button did not resume gameplay")
+		quit(1)
+		return
+	sensitivity_slider.value = 0.0022
+
 	var online_toggle: Button = main_scene.find_child("OnlineToggleButton", true, false) as Button
 	var network_panel: PanelContainer = main_scene.find_child("NetworkPanel", true, false) as PanelContainer
 	var address_input: LineEdit = main_scene.find_child("ServerAddressInput", true, false) as LineEdit

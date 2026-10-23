@@ -19,6 +19,11 @@ var match_overlay: PanelContainer
 var sun_light: DirectionalLight3D
 var world_environment: WorldEnvironment
 var quality_button: Button
+var pause_button: Button
+var pause_overlay_layer: CanvasLayer
+var pause_panel: PanelContainer
+var aim_sensitivity_slider: HSlider
+var aim_sensitivity_label: Label
 var graphics_quality_index: int = 1
 var online_toggle_button: Button
 var network_panel: PanelContainer
@@ -32,6 +37,7 @@ const NETWORK_SYNC_INTERVAL: float = 0.05
 const GRAPHICS_QUALITY_NAMES: Array[String] = ["LOW", "BALANCED", "HIGH"]
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	NetworkSession.session_changed.connect(_on_network_session_changed)
 	NetworkSession.peer_joined.connect(_on_network_peer_joined)
 	NetworkSession.peer_left.connect(_on_network_peer_left)
@@ -47,6 +53,8 @@ func _ready() -> void:
 	_update_hud()
 
 func _process(delta: float) -> void:
+	if get_tree().paused:
+		return
 	_process_network_replication(delta)
 	if match_state != &"IN_PROGRESS":
 		return
@@ -256,6 +264,7 @@ func _add_cover(pos: Vector3, dimensions: Vector3, tint: Color) -> void:
 func _spawn_safe_zone() -> void:
 	safe_zone = SafeZoneScript.new()
 	safe_zone.name = "SafeZone"
+	safe_zone.process_mode = Node.PROCESS_MODE_PAUSABLE
 	safe_zone.position = Vector3.ZERO
 	add_child(safe_zone)
 
@@ -286,6 +295,7 @@ func _spawn_loot() -> void:
 		pickup.set("item_type", item_types[index])
 		pickup.set("amount", amounts[index])
 		pickup.position = positions[index]
+		pickup.process_mode = Node.PROCESS_MODE_PAUSABLE
 		add_child(pickup)
 
 func _spawn_loot_crates() -> void:
@@ -297,12 +307,14 @@ func _spawn_loot_crates() -> void:
 	for index in range(positions.size()):
 		var crate: Node3D = LootCrateScript.new()
 		crate.name = "LootCrate_%02d" % (index + 1)
+		crate.process_mode = Node.PROCESS_MODE_PAUSABLE
 		crate.position = positions[index]
 		add_child(crate)
 
 func _spawn_player() -> void:
 	var player: CharacterBody3D = PlayerScript.new()
 	player.name = "Player"
+	player.process_mode = Node.PROCESS_MODE_PAUSABLE
 	player.position = Vector3(0.0, 0.05, 16.0)
 	player.player_eliminated.connect(_on_player_eliminated)
 	add_child(player)
@@ -320,6 +332,7 @@ func _spawn_targets() -> void:
 	for index in range(target_positions.size()):
 		var target = TargetScript.new()
 		target.name = "Target_%02d" % (index + 1)
+		target.process_mode = Node.PROCESS_MODE_PAUSABLE
 		target.position = target_positions[index]
 		add_child(target)
 		target.connect("eliminated", _on_target_eliminated)
@@ -327,6 +340,7 @@ func _spawn_targets() -> void:
 func _build_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "GameHUD"
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(layer)
 
 	status_label = Label.new()
@@ -369,6 +383,7 @@ func _build_hud() -> void:
 	layer.add_child(quality_button)
 
 	_build_network_panel(layer)
+	_build_pause_menu(layer)
 
 	var crosshair := Label.new()
 	crosshair.text = "+"
@@ -537,6 +552,124 @@ func _build_network_panel(layer: CanvasLayer) -> void:
 	network_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	network_status_label.add_theme_font_size_override("font_size", 12)
 	layout.add_child(network_status_label)
+
+func _build_pause_menu(layer: CanvasLayer) -> void:
+	pause_button = Button.new()
+	pause_button.name = "PauseButton"
+	pause_button.text = "PAUSE"
+	pause_button.anchor_left = 1.0
+	pause_button.anchor_right = 1.0
+	pause_button.offset_left = -154.0
+	pause_button.offset_right = -24.0
+	pause_button.offset_top = 74.0
+	pause_button.offset_bottom = 114.0
+	pause_button.pressed.connect(_toggle_pause)
+	layer.add_child(pause_button)
+
+	pause_overlay_layer = CanvasLayer.new()
+	pause_overlay_layer.name = "PauseOverlayLayer"
+	pause_overlay_layer.layer = 20
+	pause_overlay_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(pause_overlay_layer)
+
+	pause_panel = PanelContainer.new()
+	pause_panel.name = "PausePanel"
+	pause_panel.anchor_left = 0.5
+	pause_panel.anchor_right = 0.5
+	pause_panel.anchor_top = 0.5
+	pause_panel.anchor_bottom = 0.5
+	pause_panel.offset_left = -210.0
+	pause_panel.offset_right = 210.0
+	pause_panel.offset_top = -185.0
+	pause_panel.offset_bottom = 185.0
+	pause_panel.visible = false
+	pause_overlay_layer.add_child(pause_panel)
+
+	var layout := VBoxContainer.new()
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 12)
+	pause_panel.add_child(layout)
+
+	var heading := Label.new()
+	heading.text = "PAUSED"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 28)
+	heading.add_theme_color_override("font_color", Color(0.87, 0.78, 0.48))
+	layout.add_child(heading)
+
+	var resume_button := Button.new()
+	resume_button.name = "ResumeButton"
+	resume_button.text = "RESUME MATCH"
+	resume_button.custom_minimum_size = Vector2(240.0, 44.0)
+	resume_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	resume_button.pressed.connect(_toggle_pause)
+	layout.add_child(resume_button)
+
+	aim_sensitivity_label = Label.new()
+	aim_sensitivity_label.name = "AimSensitivityLabel"
+	aim_sensitivity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aim_sensitivity_label.text = "AIM SENSITIVITY: 1.0x"
+	layout.add_child(aim_sensitivity_label)
+
+	aim_sensitivity_slider = HSlider.new()
+	aim_sensitivity_slider.name = "AimSensitivitySlider"
+	aim_sensitivity_slider.min_value = 0.001
+	aim_sensitivity_slider.max_value = 0.006
+	aim_sensitivity_slider.step = 0.0001
+	aim_sensitivity_slider.value = 0.0022
+	aim_sensitivity_slider.custom_minimum_size = Vector2(320.0, 30.0)
+	aim_sensitivity_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	aim_sensitivity_slider.value_changed.connect(_set_aim_sensitivity)
+	layout.add_child(aim_sensitivity_slider)
+	_set_aim_sensitivity(aim_sensitivity_slider.value)
+
+	var restart_button := Button.new()
+	restart_button.name = "RestartMatchButton"
+	restart_button.text = "RESTART MATCH"
+	restart_button.custom_minimum_size = Vector2(240.0, 44.0)
+	restart_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	restart_button.pressed.connect(_restart_match)
+	layout.add_child(restart_button)
+
+	var hint := Label.new()
+	hint.text = "ESC / P toggles pause. Changes apply immediately."
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 12)
+	layout.add_child(hint)
+
+func _set_aim_sensitivity(value: float) -> void:
+	var player := get_node_or_null("Player")
+	if is_instance_valid(player):
+		player.set("mouse_sensitivity", value)
+		player.set("touch_look_sensitivity", value * (0.003 / 0.0022))
+	if is_instance_valid(aim_sensitivity_label):
+		aim_sensitivity_label.text = "AIM SENSITIVITY: %.1fx" % (value / 0.0022)
+
+func _toggle_pause() -> void:
+	if match_state != &"IN_PROGRESS":
+		return
+	var pause_now := not get_tree().paused
+	get_tree().paused = pause_now
+	if is_instance_valid(pause_panel):
+		pause_panel.visible = pause_now
+	if is_instance_valid(pause_button):
+		pause_button.text = "RESUME" if pause_now else "PAUSE"
+	if pause_now:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	elif not OS.has_feature("android") and not OS.has_feature("ios"):
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _restart_match() -> void:
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE or event.keycode == KEY_P:
+			if match_state == &"IN_PROGRESS":
+				_toggle_pause()
+				get_viewport().set_input_as_handled()
 
 func _toggle_network_panel() -> void:
 	if not is_instance_valid(network_panel):

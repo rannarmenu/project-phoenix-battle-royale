@@ -16,8 +16,8 @@ const MOVE_SPEED := 6.5
 const SPRINT_SPEED := 8.5
 const JUMP_SPEED := 7.0
 const GRAVITY := 22.0
-const MOUSE_SENSITIVITY := 0.0022
-const TOUCH_LOOK_SENSITIVITY := 0.003
+var mouse_sensitivity: float = 0.0022
+var touch_look_sensitivity: float = 0.003
 const JOYSTICK_RADIUS := 88.0
 
 var camera: Camera3D
@@ -268,7 +268,7 @@ func _make_button(text_value: String, offset: Vector2, button_size: Vector2) -> 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and not is_mobile and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		_apply_look(event.relative, MOUSE_SENSITIVITY)
+		_apply_look(event.relative, mouse_sensitivity)
 	elif event is InputEventMouseButton and not is_mobile and event.pressed:
 		if Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -323,7 +323,7 @@ func _handle_screen_drag(event: InputEventScreenDrag) -> void:
 		if is_instance_valid(joystick_overlay):
 			joystick_overlay.call("update_drag", event.position)
 	elif event.index == touch_look_index:
-		_apply_look(event.relative, TOUCH_LOOK_SENSITIVITY)
+		_apply_look(event.relative, touch_look_sensitivity)
 
 func _apply_look(relative_motion: Vector2, sensitivity: float) -> void:
 	rotate_y(-relative_motion.x * sensitivity)

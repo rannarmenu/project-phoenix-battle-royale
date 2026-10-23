@@ -19,7 +19,7 @@
 - [x] Moving enemy AI, player damage and respawn
 - [ ] Advanced enemy cover behavior / pathfinding
 - [ ] Rigged character, animations, original weapon assets and better UI
-- [ ] Pause menu, sensitivity and graphics settings
+- [x] Pause/resume/restart menu, live aim sensitivity slider and graphics quality presets
 
 ## Stage 3 — Battle-royale loop
 - [x] Add three walkable points of interest to the generated arena
