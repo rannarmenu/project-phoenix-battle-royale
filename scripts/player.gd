@@ -5,11 +5,11 @@ signal player_eliminated
 
 const VirtualJoystickScript = preload("res://scripts/virtual_joystick.gd")
 const WEAPON_PROFILES: Array[Dictionary] = [
-	{"name": "RIFLE", "damage": 34.0, "fire_delay": 0.14, "magazine_size": 30, "reserve_capacity": 240, "default_reserve": 120, "range": 140.0, "pellets": 1, "spread": 0.008, "mesh_size": Vector3(0.16, 0.13, 0.58), "color": Color(0.095, 0.12, 0.12)},
-	{"name": "SMG", "damage": 21.0, "fire_delay": 0.075, "magazine_size": 36, "reserve_capacity": 300, "default_reserve": 180, "range": 95.0, "pellets": 1, "spread": 0.02, "mesh_size": Vector3(0.14, 0.12, 0.46), "color": Color(0.16, 0.23, 0.21)},
-	{"name": "SHOTGUN", "damage": 12.0, "fire_delay": 0.72, "magazine_size": 8, "reserve_capacity": 80, "default_reserve": 40, "range": 38.0, "pellets": 7, "spread": 0.055, "mesh_size": Vector3(0.19, 0.16, 0.72), "color": Color(0.29, 0.21, 0.14)},
-	{"name": "SNIPER", "damage": 88.0, "fire_delay": 1.05, "magazine_size": 5, "reserve_capacity": 60, "default_reserve": 30, "range": 220.0, "pellets": 1, "spread": 0.002, "mesh_size": Vector3(0.12, 0.12, 0.88), "color": Color(0.18, 0.20, 0.23)},
-	{"name": "PISTOL", "damage": 26.0, "fire_delay": 0.24, "magazine_size": 12, "reserve_capacity": 120, "default_reserve": 60, "range": 90.0, "pellets": 1, "spread": 0.014, "mesh_size": Vector3(0.13, 0.12, 0.34), "color": Color(0.22, 0.24, 0.22)}
+	{"name": "RIFLE", "damage": 34.0, "fire_delay": 0.14, "magazine_size": 30, "reserve_capacity": 240, "default_reserve": 120, "range": 140.0, "pellets": 1, "spread": 0.008, "recoil": 0.012, "mesh_size": Vector3(0.16, 0.13, 0.58), "color": Color(0.095, 0.12, 0.12)},
+	{"name": "SMG", "damage": 21.0, "fire_delay": 0.075, "magazine_size": 36, "reserve_capacity": 300, "default_reserve": 180, "range": 95.0, "pellets": 1, "spread": 0.02, "recoil": 0.008, "mesh_size": Vector3(0.14, 0.12, 0.46), "color": Color(0.16, 0.23, 0.21)},
+	{"name": "SHOTGUN", "damage": 12.0, "fire_delay": 0.72, "magazine_size": 8, "reserve_capacity": 80, "default_reserve": 40, "range": 38.0, "pellets": 7, "spread": 0.055, "recoil": 0.035, "mesh_size": Vector3(0.19, 0.16, 0.72), "color": Color(0.29, 0.21, 0.14)},
+	{"name": "SNIPER", "damage": 88.0, "fire_delay": 1.05, "magazine_size": 5, "reserve_capacity": 60, "default_reserve": 30, "range": 220.0, "pellets": 1, "spread": 0.002, "recoil": 0.05, "mesh_size": Vector3(0.12, 0.12, 0.88), "color": Color(0.18, 0.20, 0.23)},
+	{"name": "PISTOL", "damage": 26.0, "fire_delay": 0.24, "magazine_size": 12, "reserve_capacity": 120, "default_reserve": 60, "range": 90.0, "pellets": 1, "spread": 0.014, "recoil": 0.016, "mesh_size": Vector3(0.13, 0.12, 0.34), "color": Color(0.22, 0.24, 0.22)}
 ]
 
 const MOVE_SPEED := 6.5
@@ -51,6 +51,11 @@ var hud_label: Label
 var joystick_overlay: Control
 var mobile_sprint_button: Button
 var mobile_sprint_active: bool = false
+var mobile_weapon_button: Button
+var hit_marker_label: Label
+var muzzle_flash: MeshInstance3D
+var camera_pitch: float = 0.0
+var recoil_offset: float = 0.0
 
 func _ready() -> void:
 	is_mobile = OS.has_feature("android") or OS.has_feature("ios")
@@ -132,6 +137,23 @@ func _make_camera_and_weapon() -> void:
 	camera.add_child(weapon)
 	_apply_weapon_appearance()
 
+	muzzle_flash = MeshInstance3D.new()
+	muzzle_flash.name = "MuzzleFlash"
+	var flash_mesh := SphereMesh.new()
+	flash_mesh.radius = 0.065
+	flash_mesh.height = 0.13
+	muzzle_flash.mesh = flash_mesh
+	muzzle_flash.position = Vector3(0.28, -0.20, -0.90)
+	var flash_material := StandardMaterial3D.new()
+	flash_material.albedo_color = Color(1.0, 0.72, 0.24)
+	flash_material.emission_enabled = true
+	flash_material.emission = Color(1.0, 0.48, 0.12)
+	flash_material.emission_energy_multiplier = 3.0
+	flash_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	muzzle_flash.material_override = flash_material
+	muzzle_flash.visible = false
+	camera.add_child(muzzle_flash)
+
 func _configure_input() -> void:
 	_add_key_action("move_forward", KEY_W)
 	_add_key_action("move_back", KEY_S)
@@ -160,6 +182,24 @@ func _build_hud() -> void:
 	hud_label.add_theme_color_override("font_color", Color(0.9, 0.97, 0.9))
 	layer.add_child(hud_label)
 	_update_hud()
+
+	hit_marker_label = Label.new()
+	hit_marker_label.name = "HitMarker"
+	hit_marker_label.text = "×"
+	hit_marker_label.anchor_left = 0.5
+	hit_marker_label.anchor_right = 0.5
+	hit_marker_label.anchor_top = 0.5
+	hit_marker_label.anchor_bottom = 0.5
+	hit_marker_label.offset_left = -18.0
+	hit_marker_label.offset_right = 18.0
+	hit_marker_label.offset_top = -24.0
+	hit_marker_label.offset_bottom = 24.0
+	hit_marker_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hit_marker_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hit_marker_label.add_theme_font_size_override("font_size", 32)
+	hit_marker_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.55))
+	hit_marker_label.visible = false
+	layer.add_child(hit_marker_label)
 
 	if is_mobile:
 		joystick_overlay = VirtualJoystickScript.new() as Control
@@ -191,9 +231,9 @@ func _build_hud() -> void:
 		mobile_sprint_button.pressed.connect(_toggle_mobile_sprint)
 		layer.add_child(mobile_sprint_button)
 
-		var weapon_button := _make_button("WEAPON", Vector2(-154, 370), Vector2(130, 44))
-		weapon_button.pressed.connect(func() -> void: switch_weapon())
-		layer.add_child(weapon_button)
+		mobile_weapon_button = _make_button("RIFLE", Vector2(-154, 370), Vector2(130, 44))
+		mobile_weapon_button.pressed.connect(func() -> void: switch_weapon())
+		layer.add_child(mobile_weapon_button)
 
 		var hint := Label.new()
 		hint.text = "LEFT: MOVE   •   RIGHT: AIM"
@@ -281,10 +321,12 @@ func _handle_screen_drag(event: InputEventScreenDrag) -> void:
 
 func _apply_look(relative_motion: Vector2, sensitivity: float) -> void:
 	rotate_y(-relative_motion.x * sensitivity)
-	camera_pivot.rotate_x(-relative_motion.y * sensitivity)
-	camera_pivot.rotation.x = clampf(camera_pivot.rotation.x, deg_to_rad(-55.0), deg_to_rad(65.0))
+	camera_pitch = clampf(camera_pitch - relative_motion.y * sensitivity, deg_to_rad(-55.0), deg_to_rad(65.0))
+	camera_pivot.rotation.x = clampf(camera_pitch + recoil_offset, deg_to_rad(-55.0), deg_to_rad(65.0))
 
 func _physics_process(delta: float) -> void:
+	recoil_offset = move_toward(recoil_offset, 0.0, delta * 1.8)
+	camera_pivot.rotation.x = clampf(camera_pitch + recoil_offset, deg_to_rad(-55.0), deg_to_rad(65.0))
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	if jump_requested and is_on_floor():
@@ -345,6 +387,8 @@ func switch_weapon(next_index: int = -1) -> void:
 	ammo = int(loadout.get("ammo", int(profile.get("magazine_size", 30))))
 	reserve_ammo = int(loadout.get("reserve", int(profile.get("default_reserve", 120))))
 	_apply_weapon_appearance()
+	if is_instance_valid(mobile_weapon_button):
+		mobile_weapon_button.text = weapon_name
 	_update_hud()
 
 func _apply_weapon_appearance() -> void:
@@ -362,6 +406,25 @@ func _apply_weapon_appearance() -> void:
 	weapon.name = str(profile.get("name", "RIFLE")) + "ViewModel"
 	weapon.visible = first_person
 
+func _trigger_weapon_feedback(recoil: float) -> void:
+	recoil_offset = clampf(recoil_offset - recoil, deg_to_rad(-8.0), 0.0)
+	camera_pivot.rotation.x = clampf(camera_pitch + recoil_offset, deg_to_rad(-55.0), deg_to_rad(65.0))
+	if is_instance_valid(muzzle_flash):
+		muzzle_flash.visible = true
+		get_tree().create_timer(0.055).timeout.connect(func() -> void:
+			if is_instance_valid(muzzle_flash):
+				muzzle_flash.visible = false
+		)
+
+func _show_hit_marker() -> void:
+	if not is_instance_valid(hit_marker_label):
+		return
+	hit_marker_label.visible = true
+	get_tree().create_timer(0.14).timeout.connect(func() -> void:
+		if is_instance_valid(hit_marker_label):
+			hit_marker_label.visible = false
+		)
+
 func _shoot() -> void:
 	if not can_fire or not is_instance_valid(camera):
 		return
@@ -374,6 +437,7 @@ func _shoot() -> void:
 	ammo -= 1
 	weapon_loadouts[get_current_weapon_name()] = {"ammo": ammo, "reserve": reserve_ammo}
 	_update_hud()
+	_trigger_weapon_feedback(float(profile.get("recoil", 0.012)))
 	var fire_delay := float(profile.get("fire_delay", 0.14))
 	get_tree().create_timer(fire_delay).timeout.connect(func() -> void: can_fire = true)
 
@@ -397,6 +461,7 @@ func _shoot() -> void:
 			var collider: Object = hit.get("collider")
 			if is_instance_valid(collider) and collider.has_method("take_damage"):
 				collider.call("take_damage", damage)
+				_show_hit_marker()
 
 func add_loot(item_type: StringName, amount: int) -> bool:
 	var pickup_amount: int = maxi(1, amount)
@@ -466,7 +531,7 @@ func _request_jump() -> void:
 
 func _update_hud() -> void:
 	if is_instance_valid(hud_label):
-		hud_label.text = "HP %d   ARM %d   MED %d\nAMMO %d / %d" % [health, armor, medkits, ammo, reserve_ammo]
+		hud_label.text = "HP %d   ARM %d   MED %d\n%s  %d / %d" % [health, armor, medkits, get_current_weapon_name(), ammo, reserve_ammo]
 		var text_color := Color(0.9, 0.97, 0.9)
 		if health <= 35:
 			text_color = Color(1.0, 0.32, 0.25)
