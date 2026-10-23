@@ -482,9 +482,41 @@ func add_loot(item_type: StringName, amount: int) -> bool:
 			if added_armor <= 0:
 				return false
 			armor += added_armor
+		&"weapon_smg":
+			return _collect_weapon_ammo(1, pickup_amount)
+		&"weapon_shotgun":
+			return _collect_weapon_ammo(2, pickup_amount)
+		&"weapon_sniper":
+			return _collect_weapon_ammo(3, pickup_amount)
+		&"weapon_pistol":
+			return _collect_weapon_ammo(4, pickup_amount)
 		_:
 			return false
 	_update_hud()
+	return true
+
+func _collect_weapon_ammo(weapon_index: int, pickup_amount: int) -> bool:
+	if weapon_index < 0 or weapon_index >= WEAPON_PROFILES.size():
+		return false
+	var profile: Dictionary = WEAPON_PROFILES[weapon_index]
+	var weapon_name := str(profile.get("name", "RIFLE"))
+	var loadout: Dictionary = weapon_loadouts.get(weapon_name, {})
+	var reserve_cap := int(profile.get("reserve_capacity", 120))
+	var reserve_before := int(loadout.get("reserve", int(profile.get("default_reserve", 30))))
+	var added_ammo := mini(pickup_amount, reserve_cap - reserve_before)
+	if added_ammo <= 0:
+		return false
+	loadout["reserve"] = reserve_before + added_ammo
+	if not loadout.has("ammo"):
+		loadout["ammo"] = int(profile.get("magazine_size", 12))
+	weapon_loadouts[weapon_name] = loadout
+	if weapon_index != current_weapon_index:
+		switch_weapon(weapon_index)
+	else:
+		ammo = int(loadout.get("ammo", ammo))
+		reserve_ammo = int(loadout["reserve"])
+		weapon_loadouts[weapon_name] = {"ammo": ammo, "reserve": reserve_ammo}
+		_update_hud()
 	return true
 
 func use_medkit() -> void:
