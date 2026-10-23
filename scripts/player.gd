@@ -3,6 +3,13 @@ extends CharacterBody3D
 signal camera_mode_changed(first_person: bool)
 
 const VirtualJoystickScript = preload("res://scripts/virtual_joystick.gd")
+const WEAPON_PROFILES: Array[Dictionary] = [
+	{"name": "RIFLE", "damage": 34.0, "fire_delay": 0.14, "magazine_size": 30, "reserve_capacity": 240, "default_reserve": 120, "range": 140.0, "pellets": 1, "spread": 0.008, "mesh_size": Vector3(0.16, 0.13, 0.58), "color": Color(0.095, 0.12, 0.12)},
+	{"name": "SMG", "damage": 21.0, "fire_delay": 0.075, "magazine_size": 36, "reserve_capacity": 300, "default_reserve": 180, "range": 95.0, "pellets": 1, "spread": 0.02, "mesh_size": Vector3(0.14, 0.12, 0.46), "color": Color(0.16, 0.23, 0.21)},
+	{"name": "SHOTGUN", "damage": 12.0, "fire_delay": 0.72, "magazine_size": 8, "reserve_capacity": 80, "default_reserve": 40, "range": 38.0, "pellets": 7, "spread": 0.055, "mesh_size": Vector3(0.19, 0.16, 0.72), "color": Color(0.29, 0.21, 0.14)},
+	{"name": "SNIPER", "damage": 88.0, "fire_delay": 1.05, "magazine_size": 5, "reserve_capacity": 60, "default_reserve": 30, "range": 220.0, "pellets": 1, "spread": 0.002, "mesh_size": Vector3(0.12, 0.12, 0.88), "color": Color(0.18, 0.20, 0.23)},
+	{"name": "PISTOL", "damage": 26.0, "fire_delay": 0.24, "magazine_size": 12, "reserve_capacity": 120, "default_reserve": 60, "range": 90.0, "pellets": 1, "spread": 0.014, "mesh_size": Vector3(0.13, 0.12, 0.34), "color": Color(0.22, 0.24, 0.22)}
+]
 
 const MOVE_SPEED := 6.5
 const SPRINT_SPEED := 8.5
@@ -26,6 +33,14 @@ var first_person := false
 var is_mobile := false
 var ammo := 30
 var reserve_ammo := 120
+var current_weapon_index: int = 0
+var weapon_loadouts: Dictionary = {
+	"RIFLE": {"ammo": 30, "reserve": 120},
+	"SMG": {"ammo": 36, "reserve": 180},
+	"SHOTGUN": {"ammo": 8, "reserve": 40},
+	"SNIPER": {"ammo": 5, "reserve": 30},
+	"PISTOL": {"ammo": 12, "reserve": 60}
+}
 var medkits := 1
 var armor := 0
 var health := 100
@@ -113,6 +128,7 @@ func _make_camera_and_weapon() -> void:
 	weapon_material.roughness = 0.5
 	weapon.material_override = weapon_material
 	camera.add_child(weapon)
+	_apply_weapon_appearance()
 
 func _configure_input() -> void:
 	_add_key_action("move_forward", KEY_W)
@@ -173,6 +189,10 @@ func _build_hud() -> void:
 		mobile_sprint_button.pressed.connect(_toggle_mobile_sprint)
 		layer.add_child(mobile_sprint_button)
 
+		var weapon_button := _make_button("WEAPON", Vector2(-154, 370), Vector2(130, 44))
+		weapon_button.pressed.connect(switch_weapon)
+		layer.add_child(weapon_button)
+
 		var hint := Label.new()
 		hint.text = "LEFT: MOVE   •   RIGHT: AIM"
 		hint.anchor_left = 0.5
@@ -215,6 +235,10 @@ func _input(event: InputEvent) -> void:
 			toggle_camera_mode()
 		elif event.keycode == KEY_R:
 			_reload()
+		elif event.keycode == KEY_Q or event.keycode == KEY_TAB:
+			switch_weapon()
+		elif event.keycode >= KEY_1 and event.keycode <= KEY_5:
+			switch_weapon(int(event.keycode - KEY_1))
 		elif event.keycode == KEY_H:
 			use_medkit()
 	elif event is InputEventScreenTouch and is_mobile:
@@ -232,7 +256,7 @@ func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 			if is_instance_valid(joystick_overlay):
 				joystick_overlay.call("begin_drag", event.position)
 		else:
-			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 378.0
+			var touching_action_buttons := event.position.x >= view_size.x - 175.0 and event.position.y <= 434.0
 			if not touching_action_buttons and event.position.x > view_size.x * 0.46 and event.position.y < view_size.y * 0.82 and touch_look_index == -1:
 				touch_look_index = event.index
 	else:
@@ -298,30 +322,86 @@ func _toggle_mobile_sprint() -> void:
 	if is_instance_valid(mobile_sprint_button):
 		mobile_sprint_button.text = "SPRINT: ON" if mobile_sprint_active else "SPRINT: OFF"
 
-func _shoot() -> void:
-	if not can_fire or not is_instance_valid(camera) or ammo <= 0:
-		if ammo <= 0:
-			_reload()
+func _weapon_profile() -> Dictionary:
+	return WEAPON_PROFILES[current_weapon_index]
+
+func get_current_weapon_name() -> String:
+	return str(_weapon_profile().get("name", "RIFLE"))
+
+func switch_weapon(next_index: int = -1) -> void:
+	var resolved_index := (current_weapon_index + 1) % WEAPON_PROFILES.size()
+	if next_index >= 0:
+		resolved_index = clampi(next_index, 0, WEAPON_PROFILES.size() - 1)
+	if resolved_index == current_weapon_index:
 		return
+
+	weapon_loadouts[get_current_weapon_name()] = {"ammo": ammo, "reserve": reserve_ammo}
+	current_weapon_index = resolved_index
+	var profile := _weapon_profile()
+	var weapon_name := get_current_weapon_name()
+	var loadout: Dictionary = weapon_loadouts.get(weapon_name, {})
+	ammo = int(loadout.get("ammo", int(profile.get("magazine_size", 30))))
+	reserve_ammo = int(loadout.get("reserve", int(profile.get("default_reserve", 120))))
+	_apply_weapon_appearance()
+	_update_hud()
+
+func _apply_weapon_appearance() -> void:
+	if not is_instance_valid(weapon):
+		return
+	var profile := _weapon_profile()
+	var rifle_mesh := BoxMesh.new()
+	rifle_mesh.size = profile.get("mesh_size", Vector3(0.16, 0.13, 0.58))
+	weapon.mesh = rifle_mesh
+	var weapon_material := StandardMaterial3D.new()
+	weapon_material.albedo_color = profile.get("color", Color(0.095, 0.12, 0.12))
+	weapon_material.metallic = 0.35
+	weapon_material.roughness = 0.52
+	weapon.material_override = weapon_material
+	weapon.name = str(profile.get("name", "RIFLE")) + "ViewModel"
+	weapon.visible = first_person
+
+func _shoot() -> void:
+	if not can_fire or not is_instance_valid(camera):
+		return
+	if ammo <= 0:
+		_reload()
+		return
+
+	var profile := _weapon_profile()
 	can_fire = false
 	ammo -= 1
+	weapon_loadouts[get_current_weapon_name()] = {"ammo": ammo, "reserve": reserve_ammo}
 	_update_hud()
-	get_tree().create_timer(0.14).timeout.connect(func() -> void: can_fire = true)
+	var fire_delay := float(profile.get("fire_delay", 0.14))
+	get_tree().create_timer(fire_delay).timeout.connect(func() -> void: can_fire = true)
+
 	var ray_start: Vector3 = camera.global_position
-	var ray_end: Vector3 = ray_start - camera.global_transform.basis.z * 140.0
-	var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
-	query.exclude = [get_rid()]
-	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		var collider: Object = hit.get("collider")
-		if is_instance_valid(collider) and collider.has_method("take_damage"):
-			collider.call("take_damage", 34.0)
+	var forward: Vector3 = -camera.global_transform.basis.z
+	var right: Vector3 = camera.global_transform.basis.x
+	var up: Vector3 = camera.global_transform.basis.y
+	var pellet_count: int = int(profile.get("pellets", 1))
+	var spread: float = float(profile.get("spread", 0.008))
+	var shot_range: float = float(profile.get("range", 140.0))
+	var damage: float = float(profile.get("damage", 34.0))
+	for pellet_index in range(pellet_count):
+		var horizontal_spread := randf_range(-spread, spread)
+		var vertical_spread := randf_range(-spread, spread)
+		var shot_direction := (forward + right * horizontal_spread + up * vertical_spread).normalized()
+		var ray_end: Vector3 = ray_start + shot_direction * shot_range
+		var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+		query.exclude = [get_rid()]
+		var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			var collider: Object = hit.get("collider")
+			if is_instance_valid(collider) and collider.has_method("take_damage"):
+				collider.call("take_damage", damage)
 
 func add_loot(item_type: StringName, amount: int) -> bool:
 	var pickup_amount: int = maxi(1, amount)
 	match item_type:
 		&"ammo":
-			var added_ammo: int = mini(pickup_amount, 240 - reserve_ammo)
+			var reserve_cap: int = int(_weapon_profile().get("reserve_capacity", 240))
+			var added_ammo: int = mini(pickup_amount, reserve_cap - reserve_ammo)
 			if added_ammo <= 0:
 				return false
 			reserve_ammo += added_ammo
@@ -363,11 +443,14 @@ func take_damage(amount: int) -> void:
 	_update_hud()
 
 func _reload() -> void:
-	if ammo >= 30 or reserve_ammo <= 0:
+	var profile := _weapon_profile()
+	var magazine_size: int = int(profile.get("magazine_size", 30))
+	if ammo >= magazine_size or reserve_ammo <= 0:
 		return
-	var amount: int = mini(30 - ammo, reserve_ammo)
+	var amount: int = mini(magazine_size - ammo, reserve_ammo)
 	ammo += amount
 	reserve_ammo -= amount
+	weapon_loadouts[get_current_weapon_name()] = {"ammo": ammo, "reserve": reserve_ammo}
 	_update_hud()
 
 func _request_jump() -> void:
