@@ -63,6 +63,70 @@ func _build_arena() -> void:
 	_add_cover(Vector3(2.0, 0.0, 9.0), Vector3(5.5, 1.2, 1.2), Color(0.25, 0.30, 0.27))
 	_add_cover(Vector3(-21.0, 0.0, 3.0), Vector3(1.5, 3.0, 7.0), Color(0.27, 0.28, 0.29))
 	_add_cover(Vector3(21.0, 0.0, -6.0), Vector3(1.5, 2.5, 7.0), Color(0.24, 0.29, 0.28))
+	_build_perimeter_foliage()
+
+func _build_perimeter_foliage() -> void:
+	var tree_positions: Array[Vector3] = [
+		Vector3(-34.0, 0.0, -32.0), Vector3(-23.0, 0.0, -35.0),
+		Vector3(-11.0, 0.0, -37.0), Vector3(2.0, 0.0, -37.0),
+		Vector3(17.0, 0.0, -35.0), Vector3(30.0, 0.0, -32.0),
+		Vector3(-36.0, 0.0, -17.0), Vector3(-37.0, 0.0, -2.0),
+		Vector3(-36.0, 0.0, 14.0), Vector3(-31.0, 0.0, 30.0),
+		Vector3(35.0, 0.0, -21.0), Vector3(37.0, 0.0, -4.0),
+		Vector3(36.0, 0.0, 13.0), Vector3(31.0, 0.0, 30.0),
+		Vector3(-18.0, 0.0, 35.0), Vector3(0.0, 0.0, 37.0),
+		Vector3(18.0, 0.0, 35.0)
+	]
+	for index in range(tree_positions.size()):
+		var tree_scale := 0.88 + float(index % 4) * 0.12
+		_add_pine_tree(tree_positions[index], tree_scale)
+
+func _add_pine_tree(pos: Vector3, tree_scale: float) -> void:
+	var tree := StaticBody3D.new()
+	tree.name = "PineTree"
+	tree.position = pos
+	add_child(tree)
+
+	var trunk := MeshInstance3D.new()
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.16 * tree_scale
+	trunk_mesh.bottom_radius = 0.27 * tree_scale
+	trunk_mesh.height = 1.8 * tree_scale
+	trunk.mesh = trunk_mesh
+	trunk.position.y = 0.9 * tree_scale
+	var trunk_material := StandardMaterial3D.new()
+	trunk_material.albedo_color = Color(0.30, 0.20, 0.12)
+	trunk_material.roughness = 1.0
+	trunk.material_override = trunk_material
+	tree.add_child(trunk)
+
+	var trunk_collision := CollisionShape3D.new()
+	var trunk_shape := CylinderShape3D.new()
+	trunk_shape.radius = 0.25 * tree_scale
+	trunk_shape.height = 1.8 * tree_scale
+	trunk_collision.shape = trunk_shape
+	trunk_collision.position.y = 0.9 * tree_scale
+	tree.add_child(trunk_collision)
+
+	var foliage_colors: Array[Color] = [
+		Color(0.10, 0.27, 0.18),
+		Color(0.13, 0.32, 0.20),
+		Color(0.16, 0.36, 0.22)
+	]
+	for tier in range(3):
+		var foliage := MeshInstance3D.new()
+		var cone := ConeMesh.new()
+		cone.top_radius = 0.035 * tree_scale
+		cone.bottom_radius = (1.05 - float(tier) * 0.17) * tree_scale
+		cone.height = (1.65 - float(tier) * 0.12) * tree_scale
+		cone.radial_segments = 8
+		foliage.mesh = cone
+		foliage.position.y = (1.55 + float(tier) * 0.63) * tree_scale
+		var foliage_material := StandardMaterial3D.new()
+		foliage_material.albedo_color = foliage_colors[tier]
+		foliage_material.roughness = 0.94
+		foliage.material_override = foliage_material
+		tree.add_child(foliage)
 
 func _add_cover(pos: Vector3, dimensions: Vector3, tint: Color) -> void:
 	var body := StaticBody3D.new()
