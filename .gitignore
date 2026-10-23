@@ -1,0 +1,17 @@
+# Godot generated/editor data
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
+# Editor/OS noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# Android build artifacts
+*.apk
+*.aab
+*.keystore
+*.jks
