@@ -6,6 +6,10 @@ config/name="Project Phoenix"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
+[autoload]
+
+NetworkSession="*res://scripts/network_session.gd"
+
 [display]
 
 window/size/viewport_width=1280
