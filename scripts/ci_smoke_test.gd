@@ -318,6 +318,42 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var network_script: Script = load("res://scripts/network_session.gd")
+	if network_script == null:
+		push_error("SMOKE TEST: Multiplayer session script could not be loaded")
+		quit(1)
+		return
+	var network_session: Node = network_script.new()
+	root.add_child(network_session)
+	await process_frame
+	var session_status: Dictionary = network_session.call("get_status_snapshot")
+	if session_status.get("role") != &"OFFLINE" or bool(session_status.get("is_online")):
+		push_error("SMOKE TEST: Multiplayer session did not initialize offline")
+		quit(1)
+		return
+	if not bool(network_session.call("validate_server_address", "127.0.0.1")):
+		push_error("SMOKE TEST: Valid IPv4 server address was rejected")
+		quit(1)
+		return
+	if not bool(network_session.call("validate_server_address", "localhost")):
+		push_error("SMOKE TEST: Valid hostname was rejected")
+		quit(1)
+		return
+	if bool(network_session.call("validate_server_address", "bad address")) or bool(network_session.call("validate_server_address", "..bad-host")):
+		push_error("SMOKE TEST: Invalid server address was accepted")
+		quit(1)
+		return
+	if int(network_session.call("host_game", 0, 16)) != ERR_INVALID_PARAMETER:
+		push_error("SMOKE TEST: Invalid server port was not rejected")
+		quit(1)
+		return
+	if int(network_session.call("join_game", "bad address", 24567)) != ERR_INVALID_PARAMETER:
+		push_error("SMOKE TEST: Invalid join address was not rejected")
+		quit(1)
+		return
+	network_session.call("leave_game")
+	network_session.queue_free()
+
 	for elimination_index in range(6):
 		main_scene.call("_on_target_eliminated")
 	if main_scene.get("match_state") != &"VICTORY":
