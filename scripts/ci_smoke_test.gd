@@ -64,6 +64,25 @@ func _run_smoke_test() -> void:
 		return
 	bot.set("strafe_phase", old_strafe_phase)
 
+	var health_bar: ProgressBar = player.find_child("PlayerHealthBar", true, false) as ProgressBar
+	var damage_overlay: ColorRect = player.find_child("DamageFlashOverlay", true, false) as ColorRect
+	if health_bar == null or damage_overlay == null or int(health_bar.value) != 100:
+		push_error("SMOKE TEST: Health bar or damage-feedback overlay was not initialized")
+		quit(1)
+		return
+	player.call("_flash_damage_screen")
+	if float(damage_overlay.color.a) < 0.25:
+		push_error("SMOKE TEST: Incoming damage screen flash did not activate")
+		quit(1)
+		return
+	player.call("_spawn_bullet_tracer", Vector3.ZERO, Vector3(0.0, 0.0, -8.0))
+	var tracer_test: MeshInstance3D = main_scene.find_child("BulletTracer", true, false) as MeshInstance3D
+	if tracer_test == null or tracer_test.mesh == null:
+		push_error("SMOKE TEST: Bullet tracer mesh did not spawn")
+		quit(1)
+		return
+	tracer_test.queue_free()
+
 	var minimap: Control = main_scene.find_child("TacticalMinimap", true, false) as Control
 	var combat_stats: Label = main_scene.find_child("CombatStats", true, false) as Label
 	var player_visual: Node3D = main_scene.find_child("PhoenixPlayerVisual", true, false) as Node3D
@@ -405,6 +424,10 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Armor damage reduction was incorrect")
 		quit(1)
 		return
+	if int(health_bar.value) != 82:
+		push_error("SMOKE TEST: Health bar did not update after combat damage")
+		quit(1)
+		return
 
 	player.call("take_damage", 999)
 	if int(player.get("health")) != 100 or int(player.get("armor")) != 0:
@@ -556,5 +579,5 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: deployment menu, tactical minimap/HUD, player/enemy models, arena POIs, camera toggle, bots, loot crates, weapon ammo, inventory, combat feedback, armor, respawn, safe zone, virtual joystick, pause/sensitivity settings, network prototype and victory flow validated")
+	print("PHOENIX_SMOKE_TEST_OK: deployment menu, tactical minimap/HUD, health bar, damage flash, bullet tracer, player/enemy models, arena POIs, camera toggle, bots, loot crates, weapon ammo, inventory, armor, respawn, safe zone, virtual joystick, pause/sensitivity settings, network prototype and victory flow validated")
 	quit(0)

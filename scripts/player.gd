@@ -50,6 +50,10 @@ var health := 100
 var lives_remaining: int = 3
 var spawn_position := Vector3.ZERO
 var hud_label: Label
+var health_bar: ProgressBar
+var health_fill_style: StyleBoxFlat
+var damage_overlay: ColorRect
+var damage_flash_tween: Tween
 var joystick_overlay: Control
 var mobile_sprint_button: Button
 var mobile_sprint_active: bool = false
@@ -284,6 +288,33 @@ func _build_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "PlayerHUD"
 	add_child(layer)
+
+	damage_overlay = ColorRect.new()
+	damage_overlay.name = "DamageFlashOverlay"
+	damage_overlay.anchor_right = 1.0
+	damage_overlay.anchor_bottom = 1.0
+	damage_overlay.color = Color(0.65, 0.02, 0.015, 0.0)
+	damage_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(damage_overlay)
+
+	health_bar = ProgressBar.new()
+	health_bar.name = "PlayerHealthBar"
+	health_bar.position = Vector2(22.0, 61.0)
+	health_bar.size = Vector2(248.0, 11.0)
+	health_bar.min_value = 0.0
+	health_bar.max_value = 100.0
+	health_bar.value = health
+	health_bar.show_percentage = false
+	health_bar.tooltip_text = "PLAYER HEALTH"
+	var health_background := StyleBoxFlat.new()
+	health_background.bg_color = Color(0.025, 0.045, 0.04, 0.92)
+	health_background.set_corner_radius_all(4)
+	health_bar.add_theme_stylebox_override("background", health_background)
+	health_fill_style = StyleBoxFlat.new()
+	health_fill_style.bg_color = Color(0.26, 0.78, 0.43)
+	health_fill_style.set_corner_radius_all(4)
+	health_bar.add_theme_stylebox_override("fill", health_fill_style)
+	layer.add_child(health_bar)
 
 	hud_label = Label.new()
 	hud_label.position = Vector2(22.0, 82.0)
@@ -571,11 +602,47 @@ func _shoot() -> void:
 		var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
 		query.exclude = [get_rid()]
 		var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+		var trace_end: Vector3 = ray_end
 		if not hit.is_empty():
+			var hit_position: Variant = hit.get("position", ray_end)
+			if hit_position is Vector3:
+				trace_end = hit_position
 			var collider: Object = hit.get("collider")
 			if is_instance_valid(collider) and collider.has_method("take_damage"):
 				collider.call("take_damage", damage)
 				_show_hit_marker()
+		elif pellet_index == 0:
+			trace_end = ray_start + shot_direction * minf(shot_range, 18.0)
+		if pellet_index == 0:
+			_spawn_bullet_tracer(ray_start, trace_end)
+
+func _spawn_bullet_tracer(from_position: Vector3, to_position: Vector3) -> void:
+	var world_parent := get_parent() as Node3D
+	if not is_instance_valid(world_parent) or from_position.distance_to(to_position) < 0.2:
+		return
+	var tracer_material := StandardMaterial3D.new()
+	tracer_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	tracer_material.albedo_color = Color(1.0, 0.72, 0.28, 0.92)
+	tracer_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	tracer_material.emission_enabled = true
+	tracer_material.emission = Color(1.0, 0.48, 0.12)
+	tracer_material.emission_energy_multiplier = 2.2
+
+	var tracer_mesh := ImmediateMesh.new()
+	tracer_mesh.surface_begin(Mesh.PRIMITIVE_LINES, tracer_material)
+	tracer_mesh.surface_add_vertex(world_parent.to_local(from_position))
+	tracer_mesh.surface_add_vertex(world_parent.to_local(to_position))
+	tracer_mesh.surface_end()
+
+	var tracer := MeshInstance3D.new()
+	tracer.name = "BulletTracer"
+	tracer.mesh = tracer_mesh
+	tracer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	world_parent.add_child(tracer)
+	get_tree().create_timer(0.055).timeout.connect(func() -> void:
+		if is_instance_valid(tracer):
+			tracer.queue_free()
+	)
 
 func _try_open_loot_crate() -> bool:
 	var nearest_crate: Node3D
@@ -658,6 +725,7 @@ func use_medkit() -> void:
 func take_damage(amount: int) -> void:
 	if amount <= 0 or lives_remaining <= 0:
 		return
+	_flash_damage_screen()
 	var incoming_damage: int = amount
 	var armor_absorbed: int = mini(armor, int(ceil(float(incoming_damage) * 0.6)))
 	armor -= armor_absorbed
@@ -690,7 +758,30 @@ func _request_jump() -> void:
 	if is_on_floor():
 		jump_requested = true
 
+func _flash_damage_screen() -> void:
+	if not is_instance_valid(damage_overlay):
+		return
+	if is_instance_valid(damage_flash_tween) and damage_flash_tween.is_running():
+		damage_flash_tween.kill()
+	damage_overlay.color = Color(0.68, 0.025, 0.015, 0.3)
+	damage_flash_tween = create_tween()
+	damage_flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	damage_flash_tween.tween_property(
+		damage_overlay,
+		"color",
+		Color(0.68, 0.025, 0.015, 0.0),
+		0.32
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
 func _update_hud() -> void:
+	if is_instance_valid(health_bar):
+		health_bar.value = health
+		if health <= 35:
+			health_fill_style.bg_color = Color(0.94, 0.19, 0.15)
+		elif health <= 65:
+			health_fill_style.bg_color = Color(0.96, 0.63, 0.2)
+		else:
+			health_fill_style.bg_color = Color(0.26, 0.78, 0.43)
 	if is_instance_valid(hud_label):
 		hud_label.text = "HP %d   ARM %d   MED %d\n%s  %d / %d" % [health, armor, medkits, get_current_weapon_name(), ammo, reserve_ammo]
 		var text_color := Color(0.9, 0.97, 0.9)

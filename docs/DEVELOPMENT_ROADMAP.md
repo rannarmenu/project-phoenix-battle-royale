@@ -15,7 +15,7 @@
 - [x] Dynamic visual virtual joystick with clamped movement direction (headless-tested)
 - [x] Mobile sprint toggle and action buttons isolated from aim-touch area
 - [ ] Verify joystick rendering, aim feel and button layout on a real Android device
-- [x] Basic weapon recoil, muzzle flash and hit markers
+- [x] Weapon recoil, muzzle flash, hit markers, health bar, damage-screen flash and lightweight bullet tracer
 - [ ] Reload animation, weapon audio and richer hit effects
 - [x] Moving enemy AI, player damage and respawn
 - [x] Basic raycast obstacle-aware enemy steering with side-route selection
