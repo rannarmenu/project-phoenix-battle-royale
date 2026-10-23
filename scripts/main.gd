@@ -133,8 +133,9 @@ func _build_points_of_interest() -> void:
 	_add_warehouse(Vector3(24.0, 0.0, -24.0), Vector3(10.0, 3.2, 8.0), Color(0.38, 0.31, 0.23), "EAST OUTPOST")
 	_add_warehouse(Vector3(23.0, 0.0, 22.0), Vector3(13.0, 4.2, 11.0), Color(0.25, 0.31, 0.34), "SOUTH DEPOT")
 
-func _add_warehouse(center: Vector3, footprint: Vector3, wall_height: float, tint: Color, call_sign: String) -> void:
+func _add_warehouse(center: Vector3, footprint: Vector3, tint: Color, call_sign: String) -> void:
 	var width := footprint.x
+	var wall_height := footprint.y
 	var depth := footprint.z
 	var wall_thickness := 0.55
 	var door_width := minf(3.2, width * 0.36)
