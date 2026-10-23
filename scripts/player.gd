@@ -85,6 +85,7 @@ func _make_camera_and_weapon() -> void:
 	spring_arm.spring_length = 4.2
 	spring_arm.margin = 0.18
 	spring_arm.collision_mask = 1
+	spring_arm.add_excluded_object(get_rid())
 	camera_pivot.add_child(spring_arm)
 
 	camera = Camera3D.new()
@@ -98,6 +99,7 @@ func _make_camera_and_weapon() -> void:
 	var weapon_mesh := BoxMesh.new()
 	weapon_mesh.size = Vector3(0.16, 0.13, 0.58)
 	weapon.mesh = weapon_mesh
+	weapon.position = Vector3(0.28, -0.22, -0.55)
 	var weapon_material := StandardMaterial3D.new()
 	weapon_material.albedo_color = Color(0.095, 0.12, 0.12)
 	weapon_material.metallic = 0.45
@@ -180,7 +182,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and not is_mobile and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_apply_look(event.relative, MOUSE_SENSITIVITY)
 	elif event is InputEventMouseButton and not is_mobile and event.pressed:
-		if event.button_index == MOUSE_BUTTON_LEFT:
+		if Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		elif event.button_index == MOUSE_BUTTON_LEFT:
 			_shoot()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE and not is_mobile:
