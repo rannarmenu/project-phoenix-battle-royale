@@ -9,6 +9,7 @@ const MinimapScript = preload("res://scripts/minimap.gd")
 
 var status_label: Label
 var kill_feed_label: Label
+var start_menu_layer: CanvasLayer
 var combat_stats_label: Label
 var tactical_minimap: Control
 var eliminated_count: int = 0
@@ -54,6 +55,7 @@ func _ready() -> void:
 	_build_hud()
 	_set_graphics_quality(graphics_quality_index)
 	_update_hud()
+	_build_start_menu()
 
 func _process(delta: float) -> void:
 	if get_tree().paused:
@@ -435,6 +437,236 @@ func _build_tactical_hud(layer: CanvasLayer) -> void:
 	combat_stats_label.text = "ALIVE  07   /   ELIMS  00"
 	layer.add_child(combat_stats_label)
 
+func _build_start_menu() -> void:
+	start_menu_layer = CanvasLayer.new()
+	start_menu_layer.name = "StartMenuLayer"
+	start_menu_layer.layer = 30
+	start_menu_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(start_menu_layer)
+
+	var backdrop := ColorRect.new()
+	backdrop.name = "StartMenuBackdrop"
+	backdrop.color = Color(0.012, 0.026, 0.032, 0.78)
+	backdrop.anchor_right = 1.0
+	backdrop.anchor_bottom = 1.0
+	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	start_menu_layer.add_child(backdrop)
+
+	var panel := PanelContainer.new()
+	panel.name = "StartMenuPanel"
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -286.0
+	panel.offset_right = 286.0
+	panel.offset_top = -272.0
+	panel.offset_bottom = 272.0
+	panel.custom_minimum_size = Vector2(572.0, 544.0)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.025, 0.048, 0.052, 0.98)
+	panel_style.border_color = Color(0.72, 0.56, 0.26, 0.8)
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(10)
+	panel_style.content_margin_left = 26.0
+	panel_style.content_margin_right = 26.0
+	panel_style.content_margin_top = 25.0
+	panel_style.content_margin_bottom = 22.0
+	panel.add_theme_stylebox_override("panel", panel_style)
+	start_menu_layer.add_child(panel)
+
+	var layout := VBoxContainer.new()
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 11)
+	panel.add_child(layout)
+
+	var eyebrow := Label.new()
+	eyebrow.text = "PHOENIX INITIATIVE  /  TACTICAL SYSTEMS"
+	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	eyebrow.add_theme_font_size_override("font_size", 12)
+	eyebrow.add_theme_color_override("font_color", Color(0.72, 0.72, 0.59))
+	layout.add_child(eyebrow)
+
+	var title := Label.new()
+	title.name = "StartMenuTitle"
+	title.text = "PHOENIX  ROYALE"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 38)
+	title.add_theme_color_override("font_color", Color(0.91, 0.75, 0.39))
+	layout.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "DROP IN. GEAR UP. OUTLAST EVERYONE."
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 13)
+	subtitle.add_theme_color_override("font_color", Color(0.79, 0.86, 0.79))
+	layout.add_child(subtitle)
+
+	var accent := ColorRect.new()
+	accent.custom_minimum_size = Vector2(160.0, 2.0)
+	accent.color = Color(0.77, 0.59, 0.28)
+	accent.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	layout.add_child(accent)
+
+	var mode_title := Label.new()
+	mode_title.text = "SELECT DEPLOYMENT"
+	mode_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mode_title.add_theme_font_size_override("font_size", 14)
+	mode_title.add_theme_color_override("font_color", Color(0.89, 0.92, 0.85))
+	layout.add_child(mode_title)
+
+	var mode_card := PanelContainer.new()
+	mode_card.name = "SoloModeCard"
+	mode_card.custom_minimum_size = Vector2(0.0, 70.0)
+	var card_style := StyleBoxFlat.new()
+	card_style.bg_color = Color(0.08, 0.14, 0.125)
+	card_style.border_color = Color(0.34, 0.53, 0.39, 0.8)
+	card_style.set_border_width_all(1)
+	card_style.set_corner_radius_all(6)
+	card_style.content_margin_left = 14.0
+	card_style.content_margin_right = 14.0
+	card_style.content_margin_top = 9.0
+	card_style.content_margin_bottom = 8.0
+	mode_card.add_theme_stylebox_override("panel", card_style)
+	layout.add_child(mode_card)
+
+	var mode_layout := HBoxContainer.new()
+	mode_layout.add_theme_constant_override("separation", 12)
+	mode_card.add_child(mode_layout)
+
+	var mode_icon := Label.new()
+	mode_icon.text = "BR"
+	mode_icon.custom_minimum_size = Vector2(46.0, 42.0)
+	mode_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mode_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	mode_icon.add_theme_font_size_override("font_size", 19)
+	mode_icon.add_theme_color_override("font_color", Color(0.9, 0.73, 0.36))
+	mode_layout.add_child(mode_icon)
+
+	var mode_details := VBoxContainer.new()
+	mode_details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mode_details.add_theme_constant_override("separation", 3)
+	mode_layout.add_child(mode_details)
+
+	var mode_name := Label.new()
+	mode_name.text = "BATTLE ROYALE  /  SOLO"
+	mode_name.add_theme_font_size_override("font_size", 15)
+	mode_name.add_theme_color_override("font_color", Color(0.95, 0.94, 0.85))
+	mode_details.add_child(mode_name)
+
+	var mode_description := Label.new()
+	mode_description.text = "Training deployment • 6 hostile bots • shrinking safe zone"
+	mode_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mode_description.add_theme_font_size_override("font_size", 11)
+	mode_description.add_theme_color_override("font_color", Color(0.69, 0.77, 0.7))
+	mode_details.add_child(mode_description)
+
+	var feature_row := HBoxContainer.new()
+	feature_row.add_theme_constant_override("separation", 10)
+	layout.add_child(feature_row)
+	_add_start_menu_stat(feature_row, "6", "HOSTILES")
+	_add_start_menu_stat(feature_row, "3", "POI ZONES")
+	_add_start_menu_stat(feature_row, "5:00", "MATCH CLOCK")
+
+	var deploy_button := Button.new()
+	deploy_button.name = "DeployButton"
+	deploy_button.text = "DEPLOY  /  START MATCH"
+	deploy_button.custom_minimum_size = Vector2(0.0, 52.0)
+	deploy_button.add_theme_font_size_override("font_size", 18)
+	deploy_button.add_theme_color_override("font_color", Color(0.045, 0.075, 0.058))
+	deploy_button.add_theme_color_override("font_hover_color", Color(0.045, 0.075, 0.058))
+	deploy_button.add_theme_stylebox_override("normal", _make_menu_button_style(Color(0.88, 0.69, 0.31)))
+	deploy_button.add_theme_stylebox_override("hover", _make_menu_button_style(Color(0.98, 0.79, 0.4)))
+	deploy_button.add_theme_stylebox_override("pressed", _make_menu_button_style(Color(0.72, 0.53, 0.2)))
+	deploy_button.pressed.connect(_start_match)
+	layout.add_child(deploy_button)
+
+	var online_button := Button.new()
+	online_button.name = "OnlineMenuButton"
+	online_button.text = "ONLINE SESSION  /  EXPERIMENTAL"
+	online_button.custom_minimum_size = Vector2(0.0, 42.0)
+	online_button.add_theme_font_size_override("font_size", 13)
+	online_button.add_theme_color_override("font_color", Color(0.84, 0.9, 0.83))
+	online_button.add_theme_stylebox_override("normal", _make_menu_button_style(Color(0.09, 0.16, 0.15)))
+	online_button.add_theme_stylebox_override("hover", _make_menu_button_style(Color(0.13, 0.24, 0.2)))
+	online_button.add_theme_stylebox_override("pressed", _make_menu_button_style(Color(0.07, 0.12, 0.11)))
+	online_button.pressed.connect(_open_online_from_menu)
+	layout.add_child(online_button)
+
+	var footer := Label.new()
+	footer.text = "WASD / MOUSE  •  ANDROID TOUCH  •  BUILD 0.2"
+	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footer.add_theme_font_size_override("font_size", 10)
+	footer.add_theme_color_override("font_color", Color(0.5, 0.6, 0.54))
+	layout.add_child(footer)
+
+	get_tree().paused = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
+func _add_start_menu_stat(parent: HBoxContainer, value_text: String, caption_text: String) -> void:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.custom_minimum_size = Vector2(0.0, 52.0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.045, 0.078, 0.073)
+	style.border_color = Color(0.2, 0.32, 0.26, 0.7)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(5)
+	style.content_margin_top = 5.0
+	style.content_margin_bottom = 5.0
+	card.add_theme_stylebox_override("panel", style)
+	parent.add_child(card)
+
+	var layout := VBoxContainer.new()
+	layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_theme_constant_override("separation", 0)
+	card.add_child(layout)
+
+	var value := Label.new()
+	value.text = value_text
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.add_theme_font_size_override("font_size", 16)
+	value.add_theme_color_override("font_color", Color(0.9, 0.75, 0.39))
+	layout.add_child(value)
+
+	var caption := Label.new()
+	caption.text = caption_text
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	caption.add_theme_font_size_override("font_size", 9)
+	caption.add_theme_color_override("font_color", Color(0.68, 0.75, 0.68))
+	layout.add_child(caption)
+
+func _make_menu_button_style(fill_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill_color
+	style.border_color = Color(0.78, 0.67, 0.4, 0.8)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(5)
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
+
+func _start_match() -> void:
+	if is_instance_valid(start_menu_layer):
+		start_menu_layer.visible = false
+		start_menu_layer.queue_free()
+	get_tree().paused = false
+	if not OS.has_feature("android") and not OS.has_feature("ios"):
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _open_online_from_menu() -> void:
+	if is_instance_valid(start_menu_layer):
+		start_menu_layer.visible = false
+		start_menu_layer.queue_free()
+	get_tree().paused = false
+	if is_instance_valid(network_panel):
+		network_panel.visible = true
+	if is_instance_valid(online_toggle_button):
+		online_toggle_button.text = "ONLINE  -"
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
 func _on_target_eliminated() -> void:
 	if match_state != &"IN_PROGRESS":
 		return
@@ -701,6 +933,8 @@ func _restart_match() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE or event.keycode == KEY_P:
+			if is_instance_valid(start_menu_layer) and start_menu_layer.visible:
+				return
 			if match_state == &"IN_PROGRESS":
 				_toggle_pause()
 				get_viewport().set_input_as_handled()

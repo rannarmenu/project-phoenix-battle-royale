@@ -21,6 +21,25 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var start_menu_layer: CanvasLayer = main_scene.find_child("StartMenuLayer", true, false) as CanvasLayer
+	var deploy_button: Button = main_scene.find_child("DeployButton", true, false) as Button
+	var menu_title: Label = main_scene.find_child("StartMenuTitle", true, false) as Label
+	if start_menu_layer == null or deploy_button == null or menu_title == null or not start_menu_layer.visible:
+		push_error("SMOKE TEST: Professional start/deployment menu was not created")
+		quit(1)
+		return
+	if not main_scene.get_tree().paused:
+		push_error("SMOKE TEST: Gameplay should be paused behind the deployment menu")
+		quit(1)
+		return
+	deploy_button.pressed.emit()
+	if main_scene.get_tree().paused or start_menu_layer.visible:
+		push_error("SMOKE TEST: Deploy action did not close the menu and start gameplay")
+		quit(1)
+		return
+	await process_frame
+	await physics_frame
+
 	var bot: Node3D = main_scene.find_child("Target_01", true, false) as Node3D
 	if bot == null:
 		push_error("SMOKE TEST: First enemy bot was not created")
@@ -537,5 +556,5 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick, sprint toggle, five weapon profiles/ammo persistence, recoil, muzzle flash, hit marker, match HUD and victory flow validated")
+	print("PHOENIX_SMOKE_TEST_OK: deployment menu, tactical minimap/HUD, player/enemy models, arena POIs, camera toggle, bots, loot crates, weapon ammo, inventory, combat feedback, armor, respawn, safe zone, virtual joystick, pause/sensitivity settings, network prototype and victory flow validated")
 	quit(0)

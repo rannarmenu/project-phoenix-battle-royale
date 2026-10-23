@@ -11,6 +11,7 @@
 - [ ] Test touch behavior, visual joystick, camera collision and sustained performance on a real Android device (not yet verified)
 
 ## Stage 2 — Shooter feel
+- [x] Add a branded deployment/start menu with match summary and Deploy/Online entry actions
 - [x] Dynamic visual virtual joystick with clamped movement direction (headless-tested)
 - [x] Mobile sprint toggle and action buttons isolated from aim-touch area
 - [ ] Verify joystick rendering, aim feel and button layout on a real Android device

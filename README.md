@@ -17,6 +17,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - Three interactive supply crates with a loot reward table, proximity prompt, desktop E interaction and Android LOOT button; each crate can be opened once.
 - Medkit healing, armor damage reduction and inventory HUD.
 - Shrinking safe zone with a visible boundary, HUD countdown/status and outside-zone damage.
+- Professional deployment menu with Battle Royale mode details, Solo training stats, Deploy action and experimental online-session entry.
 - Mobile HUD with dynamic visual virtual joystick, aim swipe area, sprint toggle and FIRE/JUMP/RELOAD/HEAL/CAMERA buttons.
 - Experimental ENet host/join/leave panel and remote-player avatar/transform replication.
 - Server-side bounds and movement-speed sanity checks for replicated client positions (not a full anti-cheat system).
