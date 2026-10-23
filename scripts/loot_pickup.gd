@@ -51,6 +51,26 @@ func _make_pickup_visual() -> void:
 			cylinder.height = 0.36
 			pickup_mesh.mesh = cylinder
 			material.albedo_color = Color(0.18, 0.62, 0.98)
+		&"weapon_smg":
+			var smg_box := BoxMesh.new()
+			smg_box.size = Vector3(0.64, 0.16, 0.24)
+			pickup_mesh.mesh = smg_box
+			material.albedo_color = Color(0.28, 0.72, 0.48)
+		&"weapon_shotgun":
+			var shotgun_box := BoxMesh.new()
+			shotgun_box.size = Vector3(0.78, 0.15, 0.22)
+			pickup_mesh.mesh = shotgun_box
+			material.albedo_color = Color(0.72, 0.48, 0.25)
+		&"weapon_sniper":
+			var sniper_box := BoxMesh.new()
+			sniper_box.size = Vector3(0.92, 0.12, 0.16)
+			pickup_mesh.mesh = sniper_box
+			material.albedo_color = Color(0.38, 0.65, 0.90)
+		&"weapon_pistol":
+			var pistol_box := BoxMesh.new()
+			pistol_box.size = Vector3(0.35, 0.18, 0.24)
+			pickup_mesh.mesh = pistol_box
+			material.albedo_color = Color(0.72, 0.75, 0.78)
 		_:
 			var fallback_box := BoxMesh.new()
 			fallback_box.size = Vector3(0.42, 0.42, 0.42)
@@ -95,6 +115,14 @@ func _get_display_name() -> String:
 			return "MEDKIT +%d" % amount
 		&"armor":
 			return "ARMOR +%d" % amount
+		&"weapon_smg":
+			return "SMG AMMO +%d" % amount
+		&"weapon_shotgun":
+			return "SHOTGUN AMMO +%d" % amount
+		&"weapon_sniper":
+			return "SNIPER AMMO +%d" % amount
+		&"weapon_pistol":
+			return "PISTOL AMMO +%d" % amount
 	return "SUPPLY"
 
 func _on_body_entered(body: Node3D) -> void:
