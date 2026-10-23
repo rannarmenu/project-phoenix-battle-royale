@@ -245,6 +245,12 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Expected three named points of interest, got %d" % poi_signs.size())
 		quit(1)
 		return
+	var warehouse_roofs := main_scene.find_children("WarehouseRoof_*", "StaticBody3D", true, false)
+	var warehouse_windows := main_scene.find_children("WarehouseWindow_*", "MeshInstance3D", true, false)
+	if warehouse_roofs.size() != 3 or warehouse_windows.size() != 6:
+		push_error("SMOKE TEST: POI buildings must have three roofs and six facade windows")
+		quit(1)
+		return
 	var loot_crates := main_scene.find_children("LootCrate_*", "Node3D", true, false)
 	if loot_crates.size() != 3:
 		push_error("SMOKE TEST: Expected three interactive supply crates, got %d" % loot_crates.size())

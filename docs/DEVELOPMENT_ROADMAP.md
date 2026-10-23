@@ -25,7 +25,7 @@
 - [x] Pause/resume/restart menu, live aim sensitivity slider and graphics quality presets
 
 ## Stage 3 — Battle-royale loop
-- [x] Add three walkable points of interest to the generated arena
+- [x] Add three walkable points of interest with roofs and facade windows to the generated arena
 - [ ] Expand into a larger battle-royale map with optimized points of interest
 - [x] Ammo, medkit and armor pickups with inventory caps
 - [x] Weapon-specific ammo pickups with matching loadout auto-select

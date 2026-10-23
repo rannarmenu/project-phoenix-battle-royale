@@ -170,6 +170,35 @@ func _add_warehouse(center: Vector3, footprint: Vector3, tint: Color, call_sign:
 		tint
 	)
 
+	var roof := _add_cover(
+		center + Vector3(0.0, wall_height, 0.0),
+		Vector3(width + 0.7, 0.34, depth + 0.7),
+		tint.darkened(0.38)
+	)
+	roof.name = "WarehouseRoof_" + call_sign.replace(" ", "_")
+
+	var window_x_positions: Array[float] = [-width * 0.27, width * 0.27]
+	for window_index in range(window_x_positions.size()):
+		var window := MeshInstance3D.new()
+		window.name = "WarehouseWindow_%s_%d" % [call_sign.replace(" ", "_"), window_index + 1]
+		var window_mesh := BoxMesh.new()
+		window_mesh.size = Vector3(minf(1.25, width * 0.15), 0.62, 0.055)
+		window.mesh = window_mesh
+		window.position = center + Vector3(
+			window_x_positions[window_index],
+			wall_height * 0.59,
+			depth * 0.5 + wall_thickness * 0.5 + 0.032
+		)
+		var window_material := StandardMaterial3D.new()
+		window_material.albedo_color = Color(0.055, 0.14, 0.15)
+		window_material.metallic = 0.42
+		window_material.roughness = 0.34
+		window_material.emission_enabled = true
+		window_material.emission = Color(0.035, 0.17, 0.14)
+		window_material.emission_energy_multiplier = 0.35
+		window.material_override = window_material
+		add_child(window)
+
 	var sign := Label3D.new()
 	sign.name = "POI_" + call_sign.replace(" ", "_")
 	sign.text = call_sign
@@ -243,7 +272,7 @@ func _add_pine_tree(pos: Vector3, tree_scale: float) -> void:
 		foliage.material_override = foliage_material
 		tree.add_child(foliage)
 
-func _add_cover(pos: Vector3, dimensions: Vector3, tint: Color) -> void:
+func _add_cover(pos: Vector3, dimensions: Vector3, tint: Color) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.position = pos
 	add_child(body)
@@ -265,6 +294,7 @@ func _add_cover(pos: Vector3, dimensions: Vector3, tint: Color) -> void:
 	collision.shape = shape
 	collision.position.y = dimensions.y * 0.5
 	body.add_child(collision)
+	return body
 
 func _spawn_safe_zone() -> void:
 	safe_zone = SafeZoneScript.new()
