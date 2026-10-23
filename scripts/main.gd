@@ -3,6 +3,7 @@ extends Node3D
 const PlayerScript = preload("res://scripts/player.gd")
 const TargetScript = preload("res://scripts/target.gd")
 const LootScript = preload("res://scripts/loot_pickup.gd")
+const LootCrateScript = preload("res://scripts/loot_crate.gd")
 const SafeZoneScript = preload("res://scripts/safe_zone.gd")
 
 var status_label: Label
@@ -40,6 +41,7 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_targets()
 	_spawn_loot()
+	_spawn_loot_crates()
 	_build_hud()
 	_set_graphics_quality(graphics_quality_index)
 	_update_hud()
@@ -285,6 +287,18 @@ func _spawn_loot() -> void:
 		pickup.set("amount", amounts[index])
 		pickup.position = positions[index]
 		add_child(pickup)
+
+func _spawn_loot_crates() -> void:
+	var positions: Array[Vector3] = [
+		Vector3(-25.0, 0.0, -10.0),
+		Vector3(24.0, 0.0, -24.0),
+		Vector3(23.0, 0.0, 22.0)
+	]
+	for index in range(positions.size()):
+		var crate: Node3D = LootCrateScript.new()
+		crate.name = "LootCrate_%02d" % (index + 1)
+		crate.position = positions[index]
+		add_child(crate)
 
 func _spawn_player() -> void:
 	var player: CharacterBody3D = PlayerScript.new()
