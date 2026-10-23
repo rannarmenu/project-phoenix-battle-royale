@@ -28,5 +28,13 @@ jobs:
       - name: Import and parse project
         run: godot --headless --editor --path . --quit
 
-      - name: Launch smoke test
-        run: godot --headless --path . --quit-after 120
+      - name: Run gameplay smoke test
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://scripts/ci_smoke_test.gd 2>&1 | tee /tmp/phoenix-smoke.log
+          grep -q "PHOENIX_SMOKE_TEST_OK" /tmp/phoenix-smoke.log
+          if grep -q "SMOKE TEST:" /tmp/phoenix-smoke.log; then
+            echo "Smoke test reported a validation failure."
+            exit 1
+          fi
