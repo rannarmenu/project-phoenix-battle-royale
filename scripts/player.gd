@@ -1,6 +1,7 @@
 extends CharacterBody3D
 
 signal camera_mode_changed(first_person: bool)
+signal player_eliminated
 
 const VirtualJoystickScript = preload("res://scripts/virtual_joystick.gd")
 const WEAPON_PROFILES: Array[Dictionary] = [
@@ -44,6 +45,7 @@ var weapon_loadouts: Dictionary = {
 var medkits := 1
 var armor := 0
 var health := 100
+var lives_remaining: int = 3
 var spawn_position := Vector3.ZERO
 var hud_label: Label
 var joystick_overlay: Control
@@ -428,7 +430,7 @@ func use_medkit() -> void:
 	_update_hud()
 
 func take_damage(amount: int) -> void:
-	if amount <= 0:
+	if amount <= 0 or lives_remaining <= 0:
 		return
 	var incoming_damage: int = amount
 	var armor_absorbed: int = mini(armor, int(ceil(float(incoming_damage) * 0.6)))
@@ -436,10 +438,15 @@ func take_damage(amount: int) -> void:
 	incoming_damage -= armor_absorbed
 	health = maxi(0, health - incoming_damage)
 	if health <= 0:
-		health = 100
+		lives_remaining -= 1
 		armor = 0
-		global_position = spawn_position
-		velocity = Vector3.ZERO
+		if lives_remaining <= 0:
+			health = 0
+			player_eliminated.emit()
+		else:
+			health = 100
+			global_position = spawn_position
+			velocity = Vector3.ZERO
 	_update_hud()
 
 func _reload() -> void:
