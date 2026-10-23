@@ -13,7 +13,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - Auto-pickup loot: ammo, medkits and armor with inventory caps.
 - Medkit healing, armor damage reduction and inventory HUD.
 - Shrinking safe zone with a visible boundary, HUD countdown/status and outside-zone damage.
-- Touch action buttons for FIRE, JUMP, RELOAD and CAMERA.
+- Mobile-only HUD with dynamic visual virtual joystick, aim swipe area, sprint toggle and FIRE/JUMP/RELOAD/HEAL/CAMERA buttons.
 - Compatibility renderer as a performance-conscious starting point.
 
 ## Controls
@@ -24,7 +24,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - **Left mouse / FIRE:** shoot
 - **R / RELOAD:** reload
 - **V / CAMERA:** toggle first-person and third-person
-- **Android touch:** drag the left side to move and the right side to aim; use on-screen buttons for actions
+- **Android touch:** drag the left side to move with a visible joystick, drag the right side to aim; use SPRINT to toggle sprint and the on-screen buttons for actions
 
 ## Open the project
 1. Install Godot 4.7.2 stable (the CI-tested version).
@@ -32,9 +32,9 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 3. Open `scenes/main.tscn` and run the project.
 
 ## Automated validation
-GitHub Actions passes a Godot 4.7.2 headless import and gameplay smoke test covering scene creation, player spawn, both camera modes, six bots, mesh references, bot damage/elimination, player respawn, enemy attack, loot pickups, inventory, medkit, armor and safe-zone shrink.
+GitHub Actions passes a Godot 4.7.2 headless import and gameplay smoke test covering scene creation, player spawn, both camera modes, six bots, mesh references, combat, enemy attack, respawn, loot collection, ammo caps/reload, medkit healing, armor damage reduction, safe-zone boundary/shrink/damage, virtual joystick clamping and sprint toggle.
 
-This is **not yet a finished Free Fire-like game**. The smoke test does not verify visual quality, real touch behavior, frame rate, thermal performance or gameplay on an Android phone.
+This is **not yet a finished Free Fire-like game**. The smoke test does not verify rendered joystick appearance, real touch behavior, frame rate, thermal performance or gameplay on an Android phone.
 
 ## Not implemented yet
 - Online multiplayer, lobby, matchmaking or player accounts.
