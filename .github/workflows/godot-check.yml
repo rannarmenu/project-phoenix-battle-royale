@@ -34,7 +34,7 @@ jobs:
           set -o pipefail
           godot --headless --path . --script res://scripts/ci_smoke_test.gd 2>&1 | tee /tmp/phoenix-smoke.log
           grep -q "PHOENIX_SMOKE_TEST_OK" /tmp/phoenix-smoke.log
-          if grep -q "SMOKE TEST:" /tmp/phoenix-smoke.log; then
-            echo "Smoke test reported a validation failure."
+          if grep -Eq "SMOKE TEST:|SCRIPT ERROR:|Parse Error:" /tmp/phoenix-smoke.log; then
+            echo "Godot reported a smoke-test or script error."
             exit 1
           fi
