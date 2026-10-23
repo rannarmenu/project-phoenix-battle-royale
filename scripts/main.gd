@@ -125,7 +125,44 @@ func _build_arena() -> void:
 	_add_cover(Vector3(2.0, 0.0, 9.0), Vector3(5.5, 1.2, 1.2), Color(0.25, 0.30, 0.27))
 	_add_cover(Vector3(-21.0, 0.0, 3.0), Vector3(1.5, 3.0, 7.0), Color(0.27, 0.28, 0.29))
 	_add_cover(Vector3(21.0, 0.0, -6.0), Vector3(1.5, 2.5, 7.0), Color(0.24, 0.29, 0.28))
+	_build_points_of_interest()
 	_build_perimeter_foliage()
+
+func _build_points_of_interest() -> void:
+	_add_warehouse(Vector3(-25.0, 0.0, -10.0), Vector3(12.0, 3.8, 10.0), Color(0.28, 0.34, 0.33), "NORTH WAREHOUSE")
+	_add_warehouse(Vector3(24.0, 0.0, -24.0), Vector3(10.0, 3.2, 8.0), Color(0.38, 0.31, 0.23), "EAST OUTPOST")
+	_add_warehouse(Vector3(23.0, 0.0, 22.0), Vector3(13.0, 4.2, 11.0), Color(0.25, 0.31, 0.34), "SOUTH DEPOT")
+
+func _add_warehouse(center: Vector3, footprint: Vector3, wall_height: float, tint: Color, call_sign: String) -> void:
+	var width := footprint.x
+	var depth := footprint.z
+	var wall_thickness := 0.55
+	var door_width := minf(3.2, width * 0.36)
+	var front_segment_width := (width - door_width) * 0.5
+
+	_add_cover(center + Vector3(-width * 0.5, 0.0, 0.0), Vector3(wall_thickness, wall_height, depth), tint)
+	_add_cover(center + Vector3(width * 0.5, 0.0, 0.0), Vector3(wall_thickness, wall_height, depth), tint)
+	_add_cover(center + Vector3(0.0, 0.0, -depth * 0.5), Vector3(width, wall_height, wall_thickness), tint)
+	_add_cover(
+		center + Vector3(-door_width * 0.5 - front_segment_width * 0.5, 0.0, depth * 0.5),
+		Vector3(front_segment_width, wall_height, wall_thickness),
+		tint
+	)
+	_add_cover(
+		center + Vector3(door_width * 0.5 + front_segment_width * 0.5, 0.0, depth * 0.5),
+		Vector3(front_segment_width, wall_height, wall_thickness),
+		tint
+	)
+
+	var sign := Label3D.new()
+	sign.name = "POI_" + call_sign.replace(" ", "_")
+	sign.text = call_sign
+	sign.position = center + Vector3(0.0, wall_height + 1.3, 0.0)
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign.font_size = 42
+	sign.pixel_size = 0.008
+	sign.modulate = Color(0.91, 0.84, 0.63)
+	add_child(sign)
 
 func _build_perimeter_foliage() -> void:
 	var tree_positions: Array[Vector3] = [
