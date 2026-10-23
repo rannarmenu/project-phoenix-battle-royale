@@ -26,7 +26,7 @@ func _run_smoke_test() -> void:
 		push_error("SMOKE TEST: Match HUD layer was not created")
 		quit(1)
 		return
-	var match_status: Label = match_hud.get_node_or_null("Label") as Label
+	var match_status: Label = match_hud.get_node_or_null("MatchStatus") as Label
 	if match_status == null:
 		push_error("SMOKE TEST: Match status label was not created")
 		quit(1)
