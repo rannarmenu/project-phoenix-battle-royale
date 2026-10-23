@@ -22,10 +22,12 @@
 - [ ] Pause menu, sensitivity and graphics settings
 
 ## Stage 3 — Battle-royale loop
-- [ ] Larger map with optimized points of interest
+- [x] Add three walkable points of interest to the generated arena
+- [ ] Expand into a larger battle-royale map with optimized points of interest
 - [x] Ammo, medkit and armor pickups with inventory caps
+- [x] Weapon-specific ammo pickups with matching loadout auto-select
 - [x] Medkit healing and armor damage reduction
-- [ ] Loot containers, multi-slot inventory, and weapon pickups
+- [ ] Loot containers that can be opened, deeper inventory, and new weapon unlock/drop flow
 - [x] Safe-zone shrink, boundary ring, HUD status and outside-zone damage
 - [x] Match timer, match-end state, kill feed and victory/defeat/retry screen
 - [ ] Multi-phase match flow, final circle and advanced loot containers
