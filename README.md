@@ -3,14 +3,14 @@
 A Godot 4 mobile-first 3D shooter prototype with both third-person and first-person camera modes.
 
 ## Implemented in the current prototype
-- Procedurally generated training arena with cover blocks, low-poly pine trees and outdoor sky lighting.
+- Procedurally generated training arena with cover blocks, low-poly pine trees, outdoor sky lighting and three walkable POIs (North Warehouse, East Outpost, South Depot).
 - Player capsule and simple prototype rifle.
 - First-person / third-person camera toggle with a collision-aware spring arm.
 - WASD movement, mouse/touch look, jump and desktop sprint.
 - Hitscan shooting, ammo/reload HUD and crosshair.
 - Six moving enemy bots that approach and attack the player.
 - Bot health, elimination counter, player damage and respawn.
-- Auto-pickup loot: ammo, medkits and armor with inventory caps.
+- Auto-pickup loot: ammo, medkits, armor and SMG/shotgun/sniper/pistol-specific ammo resupplies; weapon ammo pickups auto-select the matching loadout and respect reserve caps.
 - Medkit healing, armor damage reduction and inventory HUD.
 - Shrinking safe zone with a visible boundary, HUD countdown/status and outside-zone damage.
 - Mobile HUD with dynamic visual virtual joystick, aim swipe area, sprint toggle and FIRE/JUMP/RELOAD/HEAL/CAMERA buttons.
