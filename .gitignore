@@ -2,7 +2,8 @@
 .godot/
 .import/
 export.cfg
-export_presets.cfg
+# The tracked preset contains no secrets; never commit production signing keys/passwords.
+export_credentials.cfg
 
 # Editor/OS noise
 .DS_Store
