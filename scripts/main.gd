@@ -240,6 +240,7 @@ func _build_hud() -> void:
 	add_child(layer)
 
 	status_label = Label.new()
+	status_label.name = "MatchStatus"
 	status_label.position = Vector2(24.0, 16.0)
 	status_label.add_theme_font_size_override("font_size", 18)
 	status_label.add_theme_color_override("font_color", Color(0.9, 0.95, 0.9))
