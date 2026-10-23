@@ -96,7 +96,8 @@ func _run_smoke_test() -> void:
 	]
 	main_scene.call("_apply_network_roster", network_test_roster)
 	var remote_avatar: Node3D = main_scene.get_node_or_null("RemotePlayer_42") as Node3D
-	if remote_avatar == null:
+	var replicas_after_add: Dictionary = main_scene.get("network_player_avatars")
+	if remote_avatar == null or not replicas_after_add.has(42):
 		push_error("SMOKE TEST: A remote roster member did not create a visible avatar")
 		quit(1)
 		return
@@ -104,7 +105,8 @@ func _run_smoke_test() -> void:
 		{"peer_id": 1, "position": Vector3(0.0, 0.05, 16.0), "yaw": 0.0}
 	]
 	main_scene.call("_apply_network_roster", roster_without_remote)
-	if main_scene.get_node_or_null("RemotePlayer_42") != null:
+	var replicas_after_remove: Dictionary = main_scene.get("network_player_avatars")
+	if replicas_after_remove.has(42):
 		push_error("SMOKE TEST: Removed roster member avatar was not cleaned up")
 		quit(1)
 		return
