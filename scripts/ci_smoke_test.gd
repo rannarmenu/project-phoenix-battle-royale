@@ -141,5 +141,5 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, player, camera toggle, targets and mesh references, combat damage, enemy attack and respawn validated")
+	print("PHOENIX_SMOKE_TEST_OK: arena, cameras, bots, loot pickup, ammo inventory, medkit healing, armor, respawn, enemy attack and safe-zone shrink validated")
 	quit(0)
