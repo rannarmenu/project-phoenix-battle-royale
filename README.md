@@ -22,7 +22,7 @@ A Godot 4 mobile-first 3D shooter prototype with a camera toggle for both third-
 - **Android touch:** drag left side to move, drag right side to aim; use the on-screen buttons for actions
 
 ## Open the project
-1. Install Godot 4.3 or newer.
+1. Install Godot 4.7.2 stable (the CI-tested version).
 2. Import this repository folder as a Godot project.
 3. Open `scenes/main.tscn` and run the project.
 
