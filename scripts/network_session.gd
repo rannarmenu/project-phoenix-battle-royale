@@ -104,7 +104,7 @@ func get_status_snapshot() -> Dictionary:
 		"address": server_address,
 		"port": server_port,
 		"peer_count": connected_peers,
-		"is_server": multiplayer.is_server(),
+		"is_server": session_role == &"SERVER",
 		"is_online": session_role != &"OFFLINE",
 		"last_error": last_error
 	}
@@ -131,9 +131,17 @@ func _on_connected_to_server() -> void:
 	session_changed.emit(session_role, status_message)
 
 func _on_connection_failed() -> void:
-	_set_error(ERR_CANT_CONNECT, "Connection failed")
-	leave_game()
+	_reset_after_network_error(ERR_CANT_CONNECT, "Connection failed")
 
 func _on_server_disconnected() -> void:
-	_set_error(ERR_CONNECTION_ERROR, "Server disconnected")
-	leave_game()
+	_reset_after_network_error(ERR_CONNECTION_ERROR, "Server disconnected")
+
+func _reset_after_network_error(error_code: int, message: String) -> void:
+	if is_instance_valid(session_peer):
+		session_peer.close()
+	session_peer = null
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	session_role = &"OFFLINE"
+	last_error = error_code
+	status_message = message
+	session_changed.emit(session_role, status_message)
