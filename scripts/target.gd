@@ -99,6 +99,9 @@ func _physics_process(delta: float) -> void:
 	elif distance < BACK_OFF_RANGE:
 		move_direction = -offset.normalized()
 
+	if move_direction.length_squared() > 0.01:
+		move_direction = _avoid_obstacles(move_direction)
+
 	velocity.x = move_direction.x * move_speed
 	velocity.z = move_direction.z * move_speed
 	move_and_slide()
@@ -107,6 +110,49 @@ func _physics_process(delta: float) -> void:
 		attack_cooldown = attack_interval
 		if player.has_method("take_damage"):
 			player.call("take_damage", attack_damage)
+
+func _avoid_obstacles(desired_direction: Vector3) -> Vector3:
+	var forward := Vector3(desired_direction.x, 0.0, desired_direction.z).normalized()
+	if forward.length_squared() < 0.0001:
+		return Vector3.ZERO
+	var ray_origin := global_position + Vector3.UP * 0.95
+	if not _path_blocked(ray_origin, forward, 2.4):
+		return forward
+	var left := Vector3(-forward.z, 0.0, forward.x)
+	var blocked_left := _path_blocked(ray_origin, left, 1.8)
+	var blocked_right := _path_blocked(ray_origin, -left, 1.8)
+	return _calculate_obstacle_steer(forward, true, blocked_left, blocked_right)
+
+func _path_blocked(ray_origin: Vector3, direction: Vector3, distance: float) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(
+		ray_origin,
+		ray_origin + direction.normalized() * distance
+	)
+	query.exclude = [get_rid()]
+	query.collision_mask = collision_mask
+	return not get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+func _calculate_obstacle_steer(
+	desired_direction: Vector3,
+	blocked_ahead: bool,
+	blocked_left: bool,
+	blocked_right: bool
+) -> Vector3:
+	var forward := Vector3(desired_direction.x, 0.0, desired_direction.z).normalized()
+	if forward.length_squared() < 0.0001:
+		return Vector3.ZERO
+	if not blocked_ahead:
+		return forward
+	if blocked_left and blocked_right:
+		return -forward
+
+	var prefer_left := sin(strafe_phase) >= 0.0
+	if prefer_left and blocked_left:
+		prefer_left = false
+	elif not prefer_left and blocked_right:
+		prefer_left = true
+	var side := Vector3(-forward.z, 0.0, forward.x) * (1.0 if prefer_left else -1.0)
+	return (forward * 0.18 + side * 0.98).normalized()
 
 func take_damage(amount: float) -> void:
 	if health <= 0.0:

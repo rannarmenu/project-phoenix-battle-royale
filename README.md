@@ -8,7 +8,7 @@ A Godot 4 mobile-first 3D shooter prototype with both third-person and first-per
 - First-person / third-person camera toggle with a collision-aware spring arm.
 - WASD movement, mouse/touch look, jump and desktop sprint.
 - Hitscan shooting, ammo/reload HUD and crosshair.
-- Six moving enemy bots that approach and attack the player.
+- Six moving enemy bots that approach and attack the player, with raycast obstacle-aware steering to detour around blocked paths.
 - Bot health, elimination counter, player damage and respawn.
 - Auto-pickup loot: ammo, medkits, armor and SMG/shotgun/sniper/pistol-specific ammo resupplies; weapon ammo pickups auto-select the matching loadout and respect reserve caps.
 - Three interactive supply crates with a loot reward table, proximity prompt, desktop E interaction and Android LOOT button; each crate can be opened once.

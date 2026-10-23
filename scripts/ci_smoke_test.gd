@@ -21,6 +21,30 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var bot: Node3D = main_scene.find_child("Target_01", true, false) as Node3D
+	if bot == null:
+		push_error("SMOKE TEST: First enemy bot was not created")
+		quit(1)
+		return
+	var old_strafe_phase := float(bot.get("strafe_phase"))
+	bot.set("strafe_phase", 0.0)
+	var clear_direction: Vector3 = bot.call("_calculate_obstacle_steer", Vector3(0.0, 0.0, -1.0), false, true, true)
+	if clear_direction.distance_to(Vector3(0.0, 0.0, -1.0)) > 0.001:
+		push_error("SMOKE TEST: Bot steering changed a clear path")
+		quit(1)
+		return
+	var detour_direction: Vector3 = bot.call("_calculate_obstacle_steer", Vector3(0.0, 0.0, -1.0), true, true, false)
+	if detour_direction.x >= -0.1 or detour_direction.z >= -0.1:
+		push_error("SMOKE TEST: Bot did not steer around a blocked preferred side")
+		quit(1)
+		return
+	var escape_direction: Vector3 = bot.call("_calculate_obstacle_steer", Vector3(0.0, 0.0, -1.0), true, true, true)
+	if escape_direction.z <= 0.1:
+		push_error("SMOKE TEST: Bot did not back away when both side paths were blocked")
+		quit(1)
+		return
+	bot.set("strafe_phase", old_strafe_phase)
+
 	var match_hud: Node = main_scene.get_node_or_null("GameHUD")
 	if match_hud == null:
 		push_error("SMOKE TEST: Match HUD layer was not created")

@@ -17,7 +17,8 @@
 - [x] Basic weapon recoil, muzzle flash and hit markers
 - [ ] Reload animation, weapon audio and richer hit effects
 - [x] Moving enemy AI, player damage and respawn
-- [ ] Advanced enemy cover behavior / pathfinding
+- [x] Basic raycast obstacle-aware enemy steering with side-route selection
+- [ ] Navigation-mesh pathfinding and tactical cover-seeking behavior
 - [ ] Rigged character, animations, original weapon assets and better UI
 - [x] Pause/resume/restart menu, live aim sensitivity slider and graphics quality presets
 
