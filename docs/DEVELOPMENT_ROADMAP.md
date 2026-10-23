@@ -10,16 +10,20 @@
 - [ ] Test touch behavior and camera collision on a real Android device
 
 ## Stage 2 — Shooter feel
-- [ ] Proper virtual joystick and smoother touch controls
+- [ ] Proper visual virtual joystick and smoother touch controls
 - [ ] Weapon recoil, muzzle flash, reload animation, hit markers and sound
-- [ ] Moving enemy AI, cover behavior and player damage
+- [x] Moving enemy AI, player damage and respawn
+- [ ] Advanced enemy cover behavior / pathfinding
 - [ ] Rigged character, animations, original weapon assets and better UI
 - [ ] Pause menu, sensitivity and graphics settings
 
 ## Stage 3 — Battle-royale loop
 - [ ] Larger map with optimized points of interest
-- [ ] Loot, inventory, weapon pickups, ammo, armor and healing
-- [ ] Safe-zone shrink, zone damage and match timer
+- [x] Ammo, medkit and armor pickups with inventory caps
+- [x] Medkit healing and armor damage reduction
+- [ ] Loot containers, multi-slot inventory, and weapon pickups
+- [x] Safe-zone shrink, boundary ring, HUD status and outside-zone damage
+- [ ] Multi-phase match timer, final circle and match-end conditions
 - [ ] Match phases, kill feed and victory/defeat screen
 
 ## Stage 4 — Multiplayer
@@ -37,4 +41,4 @@
 - [ ] Privacy policy, crash reporting and release checklist
 
 ## Performance direction
-Use Godot's Compatibility renderer as the starting point. Prefer efficient geometry and materials, then increase visual quality only after profiling. This prototype is not yet editor-validated, Android-tested, multiplayer-enabled, or APK-ready.
+Use Godot's Compatibility renderer as the starting point. Prefer efficient geometry and materials, then increase visual quality only after profiling. Godot 4.7.2 headless import and gameplay smoke tests pass. Physical Android testing, multiplayer and APK packaging remain outstanding.
