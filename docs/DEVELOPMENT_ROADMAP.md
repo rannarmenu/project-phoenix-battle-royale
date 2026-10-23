@@ -27,7 +27,8 @@
 - [x] Ammo, medkit and armor pickups with inventory caps
 - [x] Weapon-specific ammo pickups with matching loadout auto-select
 - [x] Medkit healing and armor damage reduction
-- [ ] Loot containers that can be opened, deeper inventory, and new weapon unlock/drop flow
+- [x] Interactive supply crates at three POIs, opened with desktop E or mobile LOOT, granting a single reward
+- [ ] Deeper multi-slot inventory and weapon unlock/drop flow
 - [x] Safe-zone shrink, boundary ring, HUD status and outside-zone damage
 - [x] Match timer, match-end state, kill feed and victory/defeat/retry screen
 - [ ] Multi-phase match flow, final circle and advanced loot containers
@@ -43,10 +44,13 @@
 - [ ] Two-device tests, packet-loss/latency tests, and abuse/rate-limit hardening
 
 ## Stage 5 — Android release
+- [x] Add an arm64 Android debug export preset
+- [x] Add GitHub Actions workflow to build and upload a debug APK artifact
+- [ ] Verify the APK export workflow on the current main branch and install the APK on a physical phone
 - [ ] Profile CPU, GPU, memory, battery and thermals on target devices
-- [ ] Add scalable quality presets and resolution options
-- [ ] Android export preset, package ID, permissions and signing
-- [ ] Build and test signed APK/AAB on physical devices
+- [ ] Add scalable resolution/rendering settings after device profiling
+- [ ] Configure release keystore safely outside the public repository
+- [ ] Build and test signed release APK/AAB on physical devices
 - [ ] Privacy policy, crash reporting and release checklist
 
 ## Performance direction
