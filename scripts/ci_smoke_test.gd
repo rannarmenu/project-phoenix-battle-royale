@@ -65,6 +65,27 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
+	var muzzle_flash: Node = player.get_node_or_null("CameraPivot/ThirdPersonSpringArm/PlayerCamera/MuzzleFlash")
+	if muzzle_flash == null:
+		push_error("SMOKE TEST: Muzzle flash visual was not created")
+		quit(1)
+		return
+	var hit_marker: Node = player.get_node_or_null("PlayerHUD/HitMarker")
+	if hit_marker == null:
+		push_error("SMOKE TEST: Hit marker UI was not created")
+		quit(1)
+		return
+	player.call("_trigger_weapon_feedback", 0.02)
+	if float(player.get("recoil_offset")) >= 0.0 or not bool(muzzle_flash.get("visible")):
+		push_error("SMOKE TEST: Weapon recoil or muzzle flash did not activate")
+		quit(1)
+		return
+	player.call("_show_hit_marker")
+	if not bool(hit_marker.get("visible")):
+		push_error("SMOKE TEST: Hit marker did not activate")
+		quit(1)
+		return
+
 	var loot_nodes: Array[Node] = main_scene.find_children("Loot_*", "Area3D", true, false)
 	if loot_nodes.size() != 8:
 		push_error("SMOKE TEST: Expected 8 loot pickups, got %d" % loot_nodes.size())
@@ -257,5 +278,5 @@ func _run_smoke_test() -> void:
 		quit(1)
 		return
 
-	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick, sprint toggle and five weapon profiles/ammo persistence validated")
+	print("PHOENIX_SMOKE_TEST_OK: arena, camera toggle, bots, loot, inventory caps/reload, medkit, armor, respawn, enemy attack, zone shrink/damage, virtual joystick, sprint toggle, five weapon profiles/ammo persistence, recoil, muzzle flash and hit marker validated")
 	quit(0)
